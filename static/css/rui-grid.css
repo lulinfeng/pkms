@@ -1,0 +1,57 @@
+/*
+ * 表格控件样式
+ */
+.rui-grid-row-interval{background:#FAFAFA;}
+.rui-grid-row-hover{background:#ebeffa;}
+.rui-grid-row-selected{background:#fefbdb;}
+.rui-grid-row-disabled{background:#F0F0F0; color:#999 !important;}
+.rui-grid-row-disabled a{color:#999 !important;}
+.rui-grid-row-disabled a:hover{text-decoration:none !important; cursor: default}
+.rui-grid-main{display:block; overflow:visible; border:solid #DDDDDD; border-width:1px 1px 0px 1px; position:relative;}
+.rui-grid-header{display:block; overflow:hidden; background:#f1f7fc}
+.rui-grid-table{border:none; border-collapse:collapse;table-layout:fixed;}
+.rui-grid-header-th{border:#E2E2E2;*border-bottom:0;border-right:1px solid #DDDDDD;padding:0; text-align:center;background-color:#F1F1F1;vertical-align:middle;height:33px;line-height:33px;font-weight:normal;color:#3c3c3c; cursor:default;}
+.rui-grid-header-th-hover{background:#f1f7fc;}
+.rui-grid-header-th .rui-grid-td-div{font-weight:bold;}
+.rui-grid-td-div{width:100%; display:block; word-break:break-all;}
+.rui-grid-header-multi{width:40px;text-align:center}
+.rui-grid-scroller { display:block; position:relative; overflow:auto;}
+.rui-grid-body-td{border:1px solid #DDDDDD;border-width:1px 1px 1px 0;height:34px;text-align:center;padding:0;text-overflow:ellipsis;overflow:hidden; vertical-align:middle; }
+.rui-grid-header-asc{background:url(../images/rui-images/r-grid.gif) no-repeat right -648px #E2E2E2; cursor:pointer}
+.rui-grid-header-des{background:url(../images/rui-images/r-grid.gif) no-repeat right -686px #E2E2E2; cursor:pointer}
+.rui-grid-header-none{cursor:pointer}
+.rui-grid-main-border{border:#DDDDDD 1px solid}
+/*
+ * 分页控件
+ */
+.rui-page-main{display:block; overflow:hidden; height:36px; border:solid 1px #DDDDDD;border-top:dashed 1px #DDDDDD; background:#f1f1f1;}
+.rui-page-count{float:left; overflow:hidden; padding:6px 5px 0 10px; }
+.rui-page-count-select{margin:0px 4px;height:24px;}
+.rui-page-nation{float:right; padding-left:7px; margin-top:6px}
+.rui-page-nation-item{float:left; display:block;  height:24px; padding:0px 5px 0px 5px;}
+.rui-page-nation-selected .rui-page-nation-a{color:red; font-weight:bold;}
+.rui-page-nation-hover,.rui-page-nation-a,.rui-page-nation-span,.rui-page-nation-span-txt{ background:url(../images/rui-images/r-grid.gif) no-repeat;}
+.rui-page-nation-hover {background-position:0 -100px;}
+.rui-page-nation-hover .rui-page-nation-a { background-position:100% -150px; cursor:pointer; text-decoration:none }
+.rui-page-nation-hover .rui-page-nation-a:hover{text-decoration:none}
+.rui-page-nation-jnum .rui-page-nation-a{line-height:22px; padding:0px 5px 0px 0px;}
+.rui-page-nation-span,.rui-page-nation-a,.rui-page-nation-span-txt{display:inline-block; height: 25px; }
+.rui-page-nation-span-txt{padding:0px 5px 0px 15px; line-height:21px; line-height:24px\9; /* ie行高hack */}
+.rui-page-nation-first .rui-page-nation-span-txt { background-position:0 -244px;}
+.rui-page-nation-previous .rui-page-nation-span-txt { background-position:0 -294px;}
+.rui-page-nation-next,.rui-page-nation-last{padding-right:5px}
+.rui-page-nation-next .rui-page-nation-span-txt,.rui-page-nation-last .rui-page-nation-span-txt {padding:0px 15px 0px 0px}
+.rui-page-nation-next .rui-page-nation-span-txt { background-position:100% -345px;}
+.rui-page-nation-last .rui-page-nation-span-txt { background-position:100% -395px;}
+.rui-page-nation-last {margin-right:5px;}
+.rui-page-nation-disabled .rui-page-nation-span, .rui-page-nation-disabled .rui-page-nation-a { background-position:0 100px; cursor:default;}
+.rui-page-nation-disabled .rui-page-nation-span-txt { color:#666;}
+.rui-page-nation-disabled .rui-page-nation-first .rui-page-nation-span-txt { background-position:0 -444px;}
+.rui-page-nation-disabled .rui-page-nation-previous .rui-page-nation-span-txt { background-position:0 -494px;}
+.rui-page-nation-disabled .rui-page-nation-next .rui-page-nation-span-txt { background-position:100% -545px;}
+.rui-page-nation-disabled .rui-page-nation-last .rui-page-nation-span-txt { background-position:100% -595px;}
+.rui-page-nation-disabled .rui-page-nation-last { margin-right:5px;}
+.rui-page-nation-disabled{background:none;}
+.rui-page-nation-jumpto{background:none}
+.rui-page-nation-input{width:30px;height:22px; line-height:22px; text-align:center;vertical-align:middle;}
+.rui-page-nation-goto{border:1px solid #02659c; background:#008dd5;color:#fff; margin:0px 5px; padding:0px 8px; height:24px; vertical-align: middle; cursor:pointer; overflow:visible}

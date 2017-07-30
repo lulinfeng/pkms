@@ -1,0 +1,42 @@
+{% load markup static %}
+<link rel="stylesheet" href="/static/css/base.css" />
+<link rel="stylesheet" href="/static/modules/jstree/themes/default/style.min.css" />
+<link rel="stylesheet" href="/static/modules/jstree/themes/default-folder/style.css" />
+
+<link rel="stylesheet" href="/static/css/themes/basic/static/basic.css_t" />
+<link rel="stylesheet" href="/static/css/themes/sphinx_rtd.css" />
+
+<header>
+	<div id="header">
+		<div style="float:left;">好好学习：个人知识管理精进指南</div>
+		<div style="float:right;margin-right:10px;">
+			{% if user.is_authenticated %}
+				Welcome,
+				<strong>{% firstof user.get_short_name user.get_username %}</strong>.
+				<a href="/admin/logout/?next=/">Log out</a>
+			{% else %}
+				<a href="/admin/login/?next=/">Log in</a>
+			{% endif %}
+		</div>
+	</div>
+</header>
+
+<div id="menu"></div>
+
+<section class="main rst-content" id="main">
+	<div class="docs" id="docs">
+		<div class="document">
+		<p></p>
+		<p>hi, 欢迎您访问我的知识管理系统！</p>
+		<p>请点击左侧目录，开始文档探索之旅吧！</p>
+		</div>
+	</div>
+	<div class="editor" id="editor">
+		<textarea class="editor_area" id="editor_area"></textarea>
+		<button class="save" id="save">保存</button>
+		<button class="cancel" id="cancel">取消</button>
+	</div>
+</section>
+<script src="{% static "modules/jquery-1.11.2.min.js" %}"></script>
+<script src="{% static "modules/jstree/jstree.min.js" %}"></script>
+<script src="{% static "main.js" %}"></script>
