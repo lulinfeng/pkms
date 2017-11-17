@@ -1,6 +1,6 @@
 ﻿/*---------------重置样式 ，YUI 3.6.0 -----------------*/
-html{color:#000;}
-body{font:normal 12px/1.5 arial,"Microsoft Yahei",sans-serif;color: #3f3f3f; background-color: white;}
+html{color:#000;overflow: hidden;}
+body{font:normal 12px/1.5 arial,"Microsoft Yahei",sans-serif;color: #3f3f3f; background-color: white;overflow: hidden;}
 div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{margin:0;padding:0}
 table{border-collapse:collapse;border-spacing:0}
 fieldset,img{border:0}
@@ -128,7 +128,7 @@ input::-moz-focus-inner{border: 0;outline : 0; }
 	top: 42px;
 	bottom: 0px;
 }
-#main {margin-left:210px;top:45px;position:relative;}
+#main {left:210px;top:45px;right:0px;position:fixed;overflow: auto;bottom: 0px;}
 .editor {
 	display: none;
 }
