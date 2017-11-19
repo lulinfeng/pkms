@@ -103,7 +103,8 @@ class MenuTree(View):
         data = json.loads(request.body)
         pk = data['id']
         DocModel.objects.filter(pk=pk).update(content=data['content'])
-        return JsonResponse({'result': 'ok', 'msg': ''})
+
+        return JsonResponse({'result': 'ok', 'msg': '', 'doc': rst(data['content'])})
 
     def _delete_folder(self, parent_pk):
         f = SortedCatlogModel.objects.filter(folder=parent_pk)

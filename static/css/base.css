@@ -131,9 +131,6 @@ input::-moz-focus-inner{border: 0;outline : 0; }
 #main {left:210px;top:45px;right:0px;position:fixed;overflow: auto;bottom: 0px;}
 .editor {
 	display: none;
-}
-.editor_area {
-	width: 100%;
-	height: 35%;
+	height: 45%;
 }
 #header {position:fixed;border-bottom:1px solid #b1b1b1;width:100%;height:40px;z-index:100;background:#ebebeb;padding:10px;}

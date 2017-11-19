@@ -1,5 +1,31 @@
 $(function () {
+	page = {
+		editor: ace.edit("editor")
+	};
+
 	var init = function (data) {
+		page.editor.setTheme("ace/theme/twilight");
+		page.editor.session.setMode("ace/mode/rst");
+		page.editor.setKeyboardHandler("ace/keyboard/vim");
+		page.editor.commands.addCommand({
+			name: 'save',
+			bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+			exec: save
+		});
+		page.editor.commands.addCommand({
+			name: 'quit',
+			exec: quit
+		});
+		ace.config.loadModule("ace/keyboard/vim", function(m) {
+			var VimApi = require("ace/keyboard/vim").CodeMirror.Vim;
+			VimApi.defineEx("write", "w", function(cm, input) {
+				cm.ace.execCommand("save");
+			});
+			VimApi.defineEx("quit", "q", function(cm, input) {
+				cm.ace.execCommand("quit");
+			});
+		});
+
 		$('#menu').jstree({
 			'core': {
 				'data': {
@@ -50,7 +76,7 @@ $(function () {
 								if (inst.get_type(obj) == 'file') _t = 'after';
 								inst.create_node(obj, {type: 'file', data: {'source_type': 'restructuredtext'}}, _t, function (node) {
 									setTimeout(function () {
- 										inst.edit(node);
+										inst.edit(node);
 									}, 0);
 								});
 							}
@@ -100,7 +126,7 @@ $(function () {
 		}).on('changed.jstree', function (e, data) {
 			if (data && data.selected && data.selected.length &&
 				data.node.type == 'file') {
-				$('.editor').hide();
+				$('#editor').hide();
 				$('.docs').css({height: '100%', overflow: 'visible'});
 				$.ajax({
 					type: 'getdoc',
@@ -151,7 +177,7 @@ $(function () {
 						$('.docs').css({height: '50%', overflow: 'scroll'});
 						data.instance.deselect_all();
 						data.instance.select_node(data.node, true);
-						$('.editor').show();
+						$('#editor').show();
 					}
 				} else {
 					alert(resp.msg);
@@ -160,7 +186,7 @@ $(function () {
 			}).fail(function () {
 				data.instance.refresh();
 				$('.docs').css({height: '100%', overflow: 'visible'});
-				$('.editor').hide();
+				$('#editor').hide();
 			});
 		})
 		.on('rename_node.jstree', function (e, data) {
@@ -199,7 +225,7 @@ $(function () {
 			}).fail(function (e) {
 				alert(e);
 				data.instance.refresh();
-			})
+			});
 		})
 		.on('copy_node.jstree', function (e, data) {
 			// $.get('?operation=copy_node', { 'id' : data.original.id, 'parent' : data.parent })
@@ -219,69 +245,39 @@ $(function () {
 				data: JSON.stringify({'id': obj.id, 'source': true})
 			}).done(function (resp) {
 				if (resp.result == 'ok') {
-					$('#editor_area').val(resp.doc);
+					page.editor.setValue(resp.doc);
+					// $('#editor_area').val(resp.doc);
 					$('.docs').css({height: '50%', overflow: 'scroll'});
-					$('.editor').show();
+					page.editor.focus();
+					$('#editor').show();
 				} else {
 					alert(resp.msg);
 				}
 			}).fail(function (msg) {
 				alert(msg);
 			});
-		})
+		});
 	};
-	// var digui = function (arr, title, parent) {
-	// 	var data = [];
-	// 	arr.forEach (function (e) {
-	// 		if (typeof(e) == 'object') {
-	// 			var el = e[0];
-	// 			var child_arr = e.slice(1);
-	// 			var _d = {'text': title[el], 'data': {'parent': parent, 'current': el}, type: 'folder'};
-	// 			data.push(_d);
-	// 			_d['children'] = digui(child_arr, title, el);
-	// 		} else {
-	// 			var _d = {
-	// 				'text': title[e],
-	// 				'data': {'parent': parent, 'current': e},
-	// 				type: 'file'
-	// 			};
-	// 			data.push(_d);
-	// 		}
-	// 	});
-	// 	return data
-	// };
-	var extra_event = function () {
-		$('.save').on('click', function (e) {
-			var inst = $('#menu').jstree(true);
-			var pk = inst.get_selected().pop();
-			var content = $('#editor_area').val();
-			$.ajax({
-				type: 'put',
-				url: '/menu/',
-				data: JSON.stringify({'id': pk, content: content})
-			}).done(function (resp) {
-				if (resp.result == 'ok') {
-					alert('保存成功');
-					$('.docs').css({height: '100%', overflow: 'visible'});
-					$('#editor_area').val('');
-					$('.editor').hide();
-				} else {
-					alert('保存失败: ' + resp.msg);
-				}
-			})
-		})
+
+	var save = function (editor) {
+		var inst = $('#menu').jstree(true);
+		var pk = inst.get_selected().pop();
+		var content = editor.getValue();
+		$.ajax({
+			type: 'put',
+			url: '/menu/',
+			data: JSON.stringify({'id': pk, content: content})
+		}).done(function (resp) {
+			if (resp.result == 'ok') {
+				$('.docs').html(resp.doc);
+			} else {
+				alert('保存失败: ' + resp.msg);
+			}
+		});
 	};
-	// $.ajax({
-	// 	url: '/menu/'
-	// }).done(function (data) {
-	// 	if (data['result'] == 'ok') {
-	// 		var idtree = data['data']['idtree'];
-	// 		var title = data['data']['title'];
-	// 		var d = digui(idtree, title, 0);
-	// 		init(d);
-	// 		extra_event();
-	// 	}
-	// });
+	var quit = function (editor) {
+		$('.docs').css({height: '100%'});
+		$('#editor').hide();
+	};
 	init('s');
-	extra_event()
-})
+});
