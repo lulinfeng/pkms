@@ -101,41 +101,97 @@ $(function () {
 			},
 			'plugins' : ['state','dnd','types','contextmenu', 'themes']
 		}),
-		menu: $('#menu').jstree()
+		menu: $('#menu').jstree(),
+		m: document.getElementById('main'),
+		line: 30,
+		page: 550,
 	};
 	var events = {
 		docMainEvt: function () {
-			$('#docs').on('keydown', function (e) {
-				w =e;
-				console.log(e);
+			$('#main').on('keydown', function (e) {
 				switch(e.which) {
-					case 72: // left h
-						break;
-					case 75: // up k
-						// e.preventDefault();
-						e.keyCode = 38;
-						e.which = 38;
-						e.key = 'ArrowUp';
-						$('#docs').trigger(e);
-						break;
-					case 76: // right l
+					case 71: // home g end G
 						e.preventDefault();
+						var h = page.m.scrollHeight - page.m.clientHeight;
+						if (e.shiftKey) {
+							page.m.scrollTop = h;
+						} else {
+							page.m.scrollTop = 0;
+						}
+						break;
+					case 72: // left h
+						e.preventDefault();
+						if (page.m.scrollLeft > 0) {
+							if (page.m.scrollLeft < page.line) {
+								page.m.scrollLeft = 0;
+							} else {
+								page.m.scrollLeft -= page.line;
+							}
+						}
 						break;
 					case 74: // down j
 						e.preventDefault();
+						var h = page.m.scrollHeight - page.m.clientHeight;
+						if (page.m.scrollTop < h) {
+							if (h - page.m.scrollTop < page.line) {
+								page.m.scrollTop = h;
+							} else {
+								page.m.scrollTop += page.line;
+							}
+						}
 						break;
-					case 71: // home g end G
+					case 75: // up k
 						e.preventDefault();
+						if (page.m.scrollTop > 0) {
+							if (page.m.scrollTop < page.line) {
+								page.m.scrollTop = 0;
+							} else {
+								page.m.scrollTop -= page.line;
+							}
+						}
+						break;
+					case 76: // right l
+						e.preventDefault();
+						var w = page.m.scrollWidth - page.m.clientWidth;
+						if (page.m.scrollLeft < w) {
+							if (w - page.m.scrollLeft < page.line) {
+								page.m.scrollLeft = w;
+							} else {
+								page.m.scrollLeft += page.line;
+							}
+						}
+						break;
+					case 219: // pgup [
+						e.preventDefault();
+						var h = page.m.scrollHeight - page.m.clientHeight;
+						if (page.m.scrollTop < h) {
+							if (page.m.scrollTop < page.page) {
+								page.m.scrollTop = 0;
+							} else {
+								page.m.scrollTop -= page.page;
+							}
+						}
+						break;
+					case 221: // pgdn ]
+						e.preventDefault();
+						var h = page.m.scrollHeight - page.m.clientHeight;
+						if (page.m.scrollTop < h) {
+							if (h - page.m.scrollTop < page.page) {
+								page.m.scrollTop = h;
+							} else {
+								page.m.scrollTop += page.page;
+							}
+						}
 						break;
 					default:
 						break;
 				}
-			})
+			});
 		}
 	};
 
 	var init = function (data) {
-		// events.docMainEvt();
+		events.docMainEvt();
 		page.editor.setTheme("ace/theme/twilight");
 		page.editor.session.setMode("ace/mode/rst");
 		page.editor.setKeyboardHandler("ace/keyboard/vim");
@@ -337,8 +393,8 @@ $(function () {
 		.on('ready.jstree set_state.jstree', function (e, obj) {
 			page.menuElement.focus();
 			var sl = page.menu.get_selected();
-			page.menuElement.find('#'+ sl + '_anchor').focus()
-		})
+			page.menuElement.find('#'+ sl + '_anchor').focus();
+		});
 	};
 
 	var save = function (editor) {
