@@ -2,8 +2,8 @@
 <link rel="stylesheet" href="/static/css/themes/basic/static/basic.css_t" />
 <link rel="stylesheet" href="/static/css/themes/sphinx_rtd.css" />
 
-<link rel="stylesheet" href="/static/modules/jstree/themes/default/style.min.css" />
-<link rel="stylesheet" href="/static/modules/jstree/themes/default-folder/style.css" />
+{# <link rel="stylesheet" href="/static/modules/jstree/themes/default/style.min.css" /> #}
+{# <link rel="stylesheet" href="/static/modules/jstree/themes/default-dark/style.min.css" /> #}
 <link rel="stylesheet" href="/static/css/base.css" />
 
 <header>
@@ -13,9 +13,9 @@
 			{% if user.is_authenticated %}
 				Welcome,
 				<strong>{% firstof user.get_short_name user.get_username %}</strong>.
-				<a href="/admin/logout/?next=/">Log out</a>
+				<a href="/admin/logout/?next=/" tabindex="-1">Log out</a>
 			{% else %}
-				<a href="/admin/login/?next=/">Log in</a>
+				<a href="/admin/login/?next=/" tabindex="-1">Log in</a>
 			{% endif %}
 		</div>
 	</div>
@@ -24,7 +24,7 @@
 <div class="menu"><div id="menu"></div></div>
 
 <section class="main rst-content" id="main">
-	<div class="docs" id="docs">
+	<div class="docs" id="docs" tabindex="1">
 		<div class="document">
 		<p></p>
 		<p>hi, 欢迎您访问我的知识管理系统！</p>
