@@ -1,4 +1,15 @@
 $(function () {
+	var dom = require('ace/lib/dom');
+	require("ace/commands/default_commands").commands.push({
+		name: "Toggle Fullscreen",
+		bindKey: "F11",
+		exec: function (editor) {
+			var fullScreen = dom.toggleCssClass(document.body, "fullScreen")
+			dom.setCssClass(editor.container, 'fullScreen', fullScreen)
+			editor.setAutoScrollEditorIntoView(!fullScreen)
+			editor.resize()
+		}
+	})
 	page = {
 		editor: ace.edit("editor"),
 		menuElement: $('#menu').jstree({
@@ -11,9 +22,6 @@ $(function () {
 				'multiple': false,
 				'themes' : {
 					'name': 'default-dark',
-					// 'responsive' : false,
-					// 'variant' : 'small',
-					// 'stripes' : true,
 					'url': "/static/modules/jstree/themes/default-dark/style.min.css"
 				}
 			},
