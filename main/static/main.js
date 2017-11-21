@@ -171,8 +171,7 @@ $(function () {
 						break;
 					case 219: // pgup [
 						e.preventDefault();
-						var h = page.m.scrollHeight - page.m.clientHeight;
-						if (page.m.scrollTop < h) {
+						if (page.m.scrollTop > 0) {
 							if (page.m.scrollTop < page.page) {
 								page.m.scrollTop = 0;
 							} else {
@@ -321,10 +320,7 @@ $(function () {
 				});
 			})
 			.on('keydown.jstree', '.jstree-anchor', $.proxy(function (e) {
-				if (e.target.tagName && e.target.tagName.toLowerCase() == 'input') {
-					console.log('yes');
-					return;
-				}
+				if (e.target.tagName && e.target.tagName.toLowerCase() == 'input') {return;}
 				var o = null;
 				switch(e.which) {
 					case 72: // left h
@@ -373,6 +369,9 @@ $(function () {
 							if(o) { $(o).children('.jstree-anchor').filter(':visible').focus(); }
 						}
 						break;
+					case 68: // d pop submenu
+						this.show_contextmenu(e.currentTarget, e.pageX, e.pageY, e);
+						break;
 					default:
 						break;
 				}
@@ -382,6 +381,12 @@ $(function () {
 				var sl = page.menu.get_selected();
 				page.menuElement.find('#'+ sl + '_anchor').focus();
 			});
+		},
+		subMenuEvt: function () {
+			// e.preventDefault(); jstree.contextmenu.js : 637
+			$('.vakata-context').on('keydown', 'a', function (e) {
+				console.log('eeeeeeeeee')
+			})
 		}
 	};
 
