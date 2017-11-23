@@ -384,8 +384,45 @@ $(function () {
 		},
 		subMenuEvt: function () {
 			// e.preventDefault(); jstree.contextmenu.js : 637
-			$('.vakata-context').on('keydown', 'a', function (e) {
-				console.log('eeeeeeeeee')
+			$('body').on('keydown', '.vakata-context', function (e) {
+				var o = null;
+				switch(e.which) {
+					case 72: //h
+						o = $(e.target).parents('ul')
+						if (o.length > 1) {
+							o.first().hide().find(".vakata-context-hover").removeClass("vakata-context-hover");
+							$(this).find(".vakata-context-hover").last().children('a').focus();
+						}
+						e.stopImmediatePropagation();
+						e.preventDefault();
+						break;
+					case 75: // k
+						o = $(this).find("ul:visible").addBack().last().children(".vakata-context-hover").removeClass("vakata-context-hover").prevAll("li:not(.vakata-context-separator)").first();
+						if(!o.length) { o = $(this).find("ul:visible").addBack().last().children("li:not(.vakata-context-separator)").last(); }
+						o.addClass("vakata-context-hover").children('a').focus();
+						e.stopImmediatePropagation();
+						e.preventDefault();
+						break;
+					case 76: // l
+						$(this).find(".vakata-context-hover").last().children("ul").show().children("li:not(.vakata-context-separator)").removeClass("vakata-context-hover").first().addClass("vakata-context-hover").children('a').focus();
+						e.stopImmediatePropagation();
+						e.preventDefault();
+						break;
+					case 74: // j
+						o = $(this).find("ul:visible").addBack().last().children(".vakata-context-hover").removeClass("vakata-context-hover").nextAll("li:not(.vakata-context-separator)").first();
+						if(!o.length) { o = $(this).find("ul:visible").addBack().last().children("li:not(.vakata-context-separator)").first(); }
+						o.addClass("vakata-context-hover").children('a').focus();
+						e.stopImmediatePropagation();
+						e.preventDefault();
+						break;
+					case 27:
+						$.vakata.context.hide();
+						page.menu.get_node(page.menu.get_selected(), 1).find('a').focus();
+						e.preventDefault();
+						break;
+					default:
+						break;
+				}
 			})
 		}
 	};
@@ -393,6 +430,7 @@ $(function () {
 	var init = function (data) {
 		events.docMainEvt();
 		events.menuEvt();
+		events.subMenuEvt();
 		page.editor.setTheme("ace/theme/twilight");
 		page.editor.session.setMode("ace/mode/rst");
 		page.editor.setKeyboardHandler("ace/keyboard/vim");
