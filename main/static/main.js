@@ -1,15 +1,4 @@
 $(function () {
-	var dom = require('ace/lib/dom');
-	require("ace/commands/default_commands").commands.push({
-		name: "Toggle Fullscreen",
-		bindKey: "F11",
-		exec: function (editor) {
-			var fullScreen = dom.toggleCssClass(document.body, "fullScreen")
-			dom.setCssClass(editor.container, 'fullScreen', fullScreen)
-			editor.setAutoScrollEditorIntoView(!fullScreen)
-			editor.resize()
-		}
-	})
 	page = {
 		editor: ace.edit("editor"),
 		menuElement: $('#menu').jstree({
@@ -110,9 +99,12 @@ $(function () {
 			'plugins' : ['state','dnd','types','contextmenu', 'themes']
 		}),
 		menu: $('#menu').jstree(),
-		m: document.getElementById('main'),
 		line: 30,
 		page: 550,
+		// docs height and editor height initial 50%
+		docs_h: 50,
+		editor_h: 50,
+		fullScreen: false,
 	};
 	var events = {
 		docMainEvt: function () {
@@ -120,73 +112,73 @@ $(function () {
 				switch(e.which) {
 					case 71: // home g end G
 						e.preventDefault();
-						var h = page.m.scrollHeight - page.m.clientHeight;
+						var h = this.scrollHeight - this.clientHeight;
 						if (e.shiftKey) {
-							page.m.scrollTop = h;
+							this.scrollTop = h;
 						} else {
-							page.m.scrollTop = 0;
+							this.scrollTop = 0;
 						}
 						break;
 					case 72: // left h
 						e.preventDefault();
-						if (page.m.scrollLeft > 0) {
-							if (page.m.scrollLeft < page.line) {
-								page.m.scrollLeft = 0;
+						if (this.scrollLeft > 0) {
+							if (this.scrollLeft < page.line) {
+								this.scrollLeft = 0;
 							} else {
-								page.m.scrollLeft -= page.line;
+								this.scrollLeft -= page.line;
 							}
 						}
 						break;
 					case 74: // down j
 						e.preventDefault();
-						var h = page.m.scrollHeight - page.m.clientHeight;
-						if (page.m.scrollTop < h) {
-							if (h - page.m.scrollTop < page.line) {
-								page.m.scrollTop = h;
+						var h = this.scrollHeight - this.clientHeight;
+						if (this.scrollTop < h) {
+							if (h - this.scrollTop < page.line) {
+								this.scrollTop = h;
 							} else {
-								page.m.scrollTop += page.line;
+								this.scrollTop += page.line;
 							}
 						}
 						break;
 					case 75: // up k
 						e.preventDefault();
-						if (page.m.scrollTop > 0) {
-							if (page.m.scrollTop < page.line) {
-								page.m.scrollTop = 0;
+						if (this.scrollTop > 0) {
+							if (this.scrollTop < page.line) {
+								this.scrollTop = 0;
 							} else {
-								page.m.scrollTop -= page.line;
+								this.scrollTop -= page.line;
 							}
 						}
 						break;
 					case 76: // right l
 						e.preventDefault();
-						var w = page.m.scrollWidth - page.m.clientWidth;
-						if (page.m.scrollLeft < w) {
-							if (w - page.m.scrollLeft < page.line) {
-								page.m.scrollLeft = w;
+						var w = this.scrollWidth - this.clientWidth;
+						if (this.scrollLeft < w) {
+							if (w - this.scrollLeft < page.line) {
+								this.scrollLeft = w;
 							} else {
-								page.m.scrollLeft += page.line;
+								this.scrollLeft += page.line;
 							}
 						}
 						break;
 					case 219: // pgup [
 						e.preventDefault();
-						if (page.m.scrollTop > 0) {
-							if (page.m.scrollTop < page.page) {
-								page.m.scrollTop = 0;
+						if (this.scrollTop > 0) {
+							if (this.scrollTop < page.page) {
+								this.scrollTop = 0;
 							} else {
-								page.m.scrollTop -= page.page;
+								this.scrollTop -= page.page;
 							}
 						}
 						break;
 					case 221: // pgdn ]
 						e.preventDefault();
-						var h = page.m.scrollHeight - page.m.clientHeight;
-						if (page.m.scrollTop < h) {
-							if (h - page.m.scrollTop < page.page) {
-								page.m.scrollTop = h;
+						var h = this.scrollHeight - this.clientHeight;
+						if (this.scrollTop < h) {
+							if (h - this.scrollTop < page.page) {
+								this.scrollTop = h;
 							} else {
-								page.m.scrollTop += page.page;
+								this.scrollTop += page.page;
 							}
 						}
 						break;
@@ -200,7 +192,6 @@ $(function () {
 				if (data && data.selected && data.selected.length &&
 					data.node.type == 'file') {
 					$('#editor').hide();
-					$('#docs').css({height: '100%', overflow: 'visible'});
 					$.ajax({
 						type: 'getdoc',
 						url: '/menu/',
@@ -307,9 +298,8 @@ $(function () {
 					data: JSON.stringify({'id': obj.id, 'source': true})
 				}).done(function (resp) {
 					if (resp.result == 'ok') {
+						$('#docs').css({'bottom': page.docs_h + '%'})
 						page.editor.setValue(resp.doc);
-						// $('#editor_area').val(resp.doc);
-						$('#docs').css({height: '50%', overflow: 'scroll'});
 						page.editor.focus();
 						$('#editor').show();
 					} else {
@@ -443,6 +433,46 @@ $(function () {
 			name: 'quit',
 			exec: quit
 		});
+		page.editor.commands.addCommand({
+			name: 'raise',
+			bindKey: 'Ctrl-K',
+			exec: function (editor) {
+				if (page.docs_h > 5) {
+					page.docs_h -= 5
+					page.editor_h += 5
+					$('#editor').css({top: page.editor_h + '%'})
+					$('#docs').css({bottom: page.docs_h + '%'})
+					page.editor.resize()
+				}
+			}
+		});
+		page.editor.commands.addCommand({
+			name: 'lower',
+			bindKey: 'Ctrl-J',
+			exec: function (editor) {
+				if (page.docs_h < 95) {
+					page.docs_h += 5
+					page.editor_h -= 5
+					$('#editor').css({top: page.editor_h + '%'})
+					$('#docs').css({bottom: page.docs_h + '%'})
+					page.editor.resize()
+				}
+			}
+		});
+		page.editor.commands.addCommand({
+			name: "Toggle Fullscreen",
+			bindKey: "F11",
+			exec: function (editor) {
+				if (!page.fullScreen) {
+					$('#editor').css({top: '40px'})
+				} else {
+					$('#editor').css({top: page.editor_h + '%'})
+				}
+				page.fullScreen = !page.fullScreen
+				page.editor.resize()
+			}
+		})
+
 		ace.config.loadModule("ace/keyboard/vim", function(m) {
 			var VimApi = require("ace/keyboard/vim").CodeMirror.Vim;
 			VimApi.defineEx("write", "w", function(cm, input) {
@@ -474,7 +504,7 @@ $(function () {
 		$('#editor').hide();
 		var sl = page.menu.get_selected();
 		page.menuElement.find('#'+ sl + '_anchor').click();
-		$('#docs').css({height: '100%'}).focus();
+		$('#docs').css({bottom: 0}).focus();
 	};
 	init('s');
 });
