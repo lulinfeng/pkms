@@ -298,8 +298,10 @@ $(function () {
 					data: JSON.stringify({'id': obj.id, 'source': true})
 				}).done(function (resp) {
 					if (resp.result == 'ok') {
-						$('#docs').css({'bottom': page.docs_bottom + '%'})
-						page.editor.setValue(resp.doc);
+						$('#docs').css({'bottom': page.docs_bottom + '%'});
+						page.editor.session.setValue(resp.doc);
+						page.editor.clearSelection();
+						page.editor.session.$undoManager.reset();
 						page.editor.focus();
 						$('#editor').show();
 					} else {
