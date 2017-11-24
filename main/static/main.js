@@ -101,9 +101,9 @@ $(function () {
 		menu: $('#menu').jstree(),
 		line: 30,
 		page: 550,
-		// docs height and editor height initial 50%
-		docs_h: 50,
-		editor_h: 50,
+		// docs bottom and editor top initial 50%
+		docs_bottom: 50,
+		editor_top: 50,
 		fullScreen: false,
 	};
 	var events = {
@@ -298,7 +298,7 @@ $(function () {
 					data: JSON.stringify({'id': obj.id, 'source': true})
 				}).done(function (resp) {
 					if (resp.result == 'ok') {
-						$('#docs').css({'bottom': page.docs_h + '%'})
+						$('#docs').css({'bottom': page.docs_bottom + '%'})
 						page.editor.setValue(resp.doc);
 						page.editor.focus();
 						$('#editor').show();
@@ -435,26 +435,30 @@ $(function () {
 		});
 		page.editor.commands.addCommand({
 			name: 'raise',
-			bindKey: 'Ctrl-K',
+			bindKey: 'Ctrl-J',
 			exec: function (editor) {
-				if (page.docs_h > 5) {
-					page.docs_h -= 5
-					page.editor_h += 5
-					$('#editor').css({top: page.editor_h + '%'})
-					$('#docs').css({bottom: page.docs_h + '%'})
+				if (page.docs_bottom > 10) {
+					page.docs_bottom -= 5
+					page.editor_top += 5
+					$('#editor').css({top: page.editor_top + '%'})
+					$('#docs').css({bottom: page.docs_bottom + '%'})
 					page.editor.resize()
 				}
 			}
 		});
 		page.editor.commands.addCommand({
 			name: 'lower',
-			bindKey: 'Ctrl-J',
+			bindKey: 'Ctrl-K',
 			exec: function (editor) {
-				if (page.docs_h < 95) {
-					page.docs_h += 5
-					page.editor_h -= 5
-					$('#editor').css({top: page.editor_h + '%'})
-					$('#docs').css({bottom: page.docs_h + '%'})
+				if (page.docs_bottom < 95) {
+					page.docs_bottom += 5
+					page.editor_top -= 5
+					if (page.editor_top <= 5) {
+						$('#editor').css({top: '40px'})
+					} else {
+						$('#editor').css({top: page.editor_top + '%'})
+					}
+					$('#docs').css({bottom: page.docs_bottom + '%'})
 					page.editor.resize()
 				}
 			}
@@ -466,7 +470,7 @@ $(function () {
 				if (!page.fullScreen) {
 					$('#editor').css({top: '40px'})
 				} else {
-					$('#editor').css({top: page.editor_h + '%'})
+					$('#editor').css({top: page.editor_top + '%'})
 				}
 				page.fullScreen = !page.fullScreen
 				page.editor.resize()
