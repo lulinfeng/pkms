@@ -36,9 +36,10 @@ $(function () {
 									// var tmp = inst.get_node(obj.parent);
 									// pos = $.inArray(obj.id, tmp.children);
 								}
-								inst.create_node(obj, {type: 'folder'}, _t, function (node) {
-									setTimeout(function () {inst.edit(node);}, 0);
-								});
+								inst.create_node(obj,
+									{type: 'folder', data: {create: true}}, _t,
+									function (node) {inst.edit(node)}
+								)
 							}
 						},
 						"create_rstfile" : {
@@ -48,11 +49,10 @@ $(function () {
 									obj = inst.get_node(data.reference);
 								var _t = 'first';
 								if (inst.get_type(obj) == 'file') _t = 'after';
-								inst.create_node(obj, {type: 'file', data: {'source_type': 'restructuredtext'}}, _t, function (node) {
-									setTimeout(function () {
-										inst.edit(node);
-									}, 0);
-								});
+								inst.create_node(obj,
+									{type: 'file', data: {'source_type': 'restructuredtext', 'create': true}},
+									_t, function (node) {inst.edit(node)}
+								)
 							}
 						},
 						"create_mdfile" : {
@@ -62,9 +62,10 @@ $(function () {
 									obj = inst.get_node(data.reference);
 								var _t = 'first';
 								if (inst.get_type(obj) == 'file') _t = 'after';
-								inst.create_node(obj, {type: 'file', data: {'source_type': 'markdown'}}, _t, function (node) {
-									setTimeout(function () {inst.edit(node);}, 0);
-								});
+								inst.create_node(obj,
+									{type: 'file', data: {'source_type': 'markdown', create: true}},
+									_t, function (node) {inst.edit(node)}
+								)
 							}
 						}
 					};
@@ -106,6 +107,7 @@ $(function () {
 		editor_top: 50,
 		fullScreen: false,
 	};
+
 	var events = {
 		docMainEvt: function () {
 			$('#main').on('keydown', '#docs', function (e) {
@@ -198,7 +200,7 @@ $(function () {
 						data: JSON.stringify({'id': data.node.id})
 					}).done(function (resp) {
 						if (resp.result == 'ok') {
-							$('#docs').html(resp.doc);
+							$('#docs').html(resp.doc).css('bottom', 0);
 						} else {
 							alert(resp.msg);
 						}
@@ -207,52 +209,32 @@ $(function () {
 					});
 				}
 			}).on('delete_node.jstree', function (e, data) {
-				$.ajax({
-					type: 'delete',
-					url: '/menu/',
-					data: JSON.stringify({'id': data.node.id, type: data.node.type})
-				}).done(function (resp) {
-					if (resp.result != 'ok') {
-						alert(resp.msg);
-						data.instance.refresh();
-					}
-				}).fail(function (msg) {
-					alert(msg);
-				});
-			})
-			.on('create_node.jstree', function (e, data) {
-				var parent = data.parent == '#' ? 0 : data.parent;
-				var pos = data.position;
-				$.ajax({
-					type: 'create',
-					url: '/menu/',
-					data: JSON.stringify({
-						parent: parent,
-						pos: pos,
-						type: data.node.type,
-						text: data.node.text,
-						source_type: data.node.data && data.node.data.source_type || ''
-					})
-				}).done(function (resp) {
-					if (resp.result == 'ok') {
-						data.instance.set_id(data.node, resp.id);
-						if (data.node.type == 'file') {
-							$('#docs').css({height: '50%', overflow: 'scroll'});
-							data.instance.deselect_all();
-							data.instance.select_node(data.node, true);
-							$('#editor').show();
+				if (data.node.id == 0) {
+					alert('can not delet the root node!')
+				}
+				if (confirm('delete the document?')) {
+					$.ajax({
+						type: 'delete',
+						url: '/menu/',
+						data: JSON.stringify({'id': data.node.id, type: data.node.type})
+					}).done(function (resp) {
+						if (resp.result != 'ok') {
+							alert(resp.msg);
+							data.instance.refresh();
 						}
-					} else {
-						alert(resp.msg);
-						data.instance.refresh();
-					}
-				}).fail(function () {
-					data.instance.refresh();
-					$('#docs').css({height: '100%', overflow: 'visible'});
-					$('#editor').hide();
-				});
+					}).fail(function (msg) {
+						alert(msg);
+					});
+				}
 			})
 			.on('rename_node.jstree', function (e, data) {
+				if (data.node.data && data.node.data.create) {
+					delete data.node.data.create
+					if (data.node.parent == '#') data.node.parent = 0
+					var pos = $.inArray(data.node.id, data.instance.get_node(data.node.parent).children)
+					events.create_node(pos, data)
+					return
+				}
 				$.ajax({
 					type: 'rename',
 					url: '/menu/',
@@ -300,8 +282,8 @@ $(function () {
 					if (resp.result == 'ok') {
 						$('#docs').css({'bottom': page.docs_bottom + '%'});
 						page.editor.session.setValue(resp.doc);
-						page.editor.clearSelection();
-						page.editor.session.$undoManager.reset();
+						// page.editor.clearSelection();
+						// page.editor.session.$undoManager.reset();
 						page.editor.focus();
 						$('#editor').show();
 					} else {
@@ -416,6 +398,38 @@ $(function () {
 						break;
 				}
 			})
+		},
+		create_node: function (pos, data) {
+			$.ajax({
+				type: 'create',
+				url: '/menu/',
+				data: JSON.stringify({
+					parent: data.node.parent,
+					pos: pos,
+					type: data.node.type,
+					text: data.node.text,
+					source_type: data.node.data && data.node.data.source_type || ''
+				})
+			}).done(function (resp) {
+				if (resp.result == 'ok') {
+					data.instance.set_id(data.node, resp.id);
+					if (data.node.type == 'file') {
+						$('#docs').css({bottom: page.docs_bottom + '%'})
+						data.instance.deselect_all()
+						data.instance.select_node(data.node, true)
+						$('#editor').css({top: page.editor_top + '%'}).show()
+						page.editor.session.setValue('');
+						page.editor.focus()
+					}
+				} else {
+					alert(resp.msg);
+					data.instance.refresh();
+				}
+			}).fail(function () {
+				data.instance.refresh();
+				$('#docs').css({bottom: 0})
+				$('#editor').hide()
+			});
 		}
 	};
 
