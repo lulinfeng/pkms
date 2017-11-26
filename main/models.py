@@ -20,6 +20,7 @@ class DocModel(models.Model):
 	def __str__(self):
 		return self.title
 
+	ispwd = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0)
 	# TODO: 改成列表，支持标签引用
 	parent = models.IntegerField(default=0)
@@ -28,6 +29,9 @@ class DocModel(models.Model):
 	# source_type: ''|'restructuredtext'|'markdown'
 	source_type = models.CharField(max_length=20, default='')
 	tag = models.CharField(max_length=20, default='')
+	pwd = models.CharField(max_length=20, default='')
+	newtime = models.DateTimeField(auto_now_add=True)
+	changetime = models.DateTimeField(auto_now=True)
 	title = models.CharField(max_length=50)
 	content = models.TextField(default='')
 

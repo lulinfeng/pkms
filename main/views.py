@@ -1,10 +1,14 @@
 # coding: utf-8
+
 import json
 from functools import wraps
+
 from django.utils.decorators import available_attrs
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
+from django.db.models import F, Case, When
+
 from markup.templatetags.markup import restructuredtext as rst, markdown
 from main.models import DocModel, SortedCatlogModel
 
@@ -43,24 +47,25 @@ class MenuTree(View):
         pk = request.GET['id']
         if pk == '#':
             SortedCatlogModel.objects.get_or_create(
-                folder=0, defaults={'children':bytes([])}
+                folder=0, defaults={'children': bytes([])}
             )
             return JsonResponse(
                 [{'id': "0", 'text': 'Root', 'children': True, 'state': {'disabled': True}}],
                 safe=False
             )
-        from django.db.models import F, Case, When
         # 按照目录子集合结构排序
         _children_list = SortedCatlogModel.objects.values_list('children', flat=True).get(folder=pk)
         children_list = json.loads(bytes(_children_list))
         orderby = Case(*[When(pk=k, then=pos) for pos, k in enumerate(children_list)])
-        r = DocModel.objects.filter(pk__in=children_list).values('id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
-        # t = [{"id":1,"text":"Root node","children":[
+        r = DocModel.objects.filter(pk__in=children_list).values(
+            'id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
+        # r = [{"id":1,"text":"Root node","children":[
         #     {"id":2,"text":"Child node 1","children":True},
         #     {"id":3,"text":"Child node 2"}
         #     ]
         # }]
         r = list(r)
+        # on jstree ajax mode, the true children means that is a closed folder
         for i in r:
             if i.get('type') == 'folder':
                 i.update({'children': True})
@@ -73,7 +78,10 @@ class MenuTree(View):
         title = data['text']
         source_type = data.get('source_type', '')
         _type = data['type']
-        d = DocModel.objects.create(parent=parent, title=title, doctype=_type, source_type=source_type)
+        ispwd = 'ispwd' in data and data['ispwd']
+        pwd = data.get('pwd', '')
+        d = DocModel.objects.create(parent=parent, title=title, doctype=_type,
+            source_type=source_type, ispwd=ispwd, pwd=pwd)
         obj = SortedCatlogModel.objects.get(folder=parent)
         children = json.loads(bytes(obj.children))
         children.insert(int(pos), d.pk)
@@ -87,13 +95,15 @@ class MenuTree(View):
         data = json.loads(request.body)
         pk = data['id']
         source = data.get('source')  # 获取源文件用于编辑
-        d, source_type = DocModel.objects.values_list('content', 'source_type').get(pk=pk)
+        d, source_type, ispwd, pwd = DocModel.objects.values_list('content',
+            'source_type', 'ispwd', 'pwd').get(pk=pk)
+        if ispwd and pwd != data.get('pwd'):
+            return JsonResponse({'result': 'fail', 'msg': 'inviable password'})
         if source is True:
             return JsonResponse({'result': 'ok', 'doc': d})
         else:
-            if source_type == 'restructuredtext':
+            if source_type == 'rst':
                 html = rst(d)
-            # elif source_type == 'markdown':
             else:
                 html = markdown(d)
             return JsonResponse({'result': 'ok', 'doc': html})
