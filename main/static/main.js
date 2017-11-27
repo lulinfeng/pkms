@@ -368,6 +368,25 @@ page.op = {
 				break
 		}
 	}
+	,lowerDoc: function (el) {
+		var h = el.scrollHeight - el.clientHeight
+		if (el.scrollTop < h) {
+			if (h - el.scrollTop < page.base.line) {
+				el.scrollTop = h
+			} else {
+				el.scrollTop += page.base.line
+			}
+		}
+	}
+	,raiseDoc: function (el) {
+		if (el.scrollTop > 0) {
+			if (el.scrollTop < page.base.line) {
+				el.scrollTop = 0
+			} else {
+				el.scrollTop -= page.base.line
+			}
+		}
+	}
 }
 
 page.event = {
@@ -395,24 +414,26 @@ page.event = {
 					break
 				case 74: // down j
 					e.preventDefault()
-					var h = this.scrollHeight - this.clientHeight
-					if (this.scrollTop < h) {
-						if (h - this.scrollTop < page.base.line) {
-							this.scrollTop = h
-						} else {
-							this.scrollTop += page.base.line
-						}
-					}
+					page.op.lowerDoc(this)
+					// var h = this.scrollHeight - this.clientHeight
+					// if (this.scrollTop < h) {
+					// 	if (h - this.scrollTop < page.base.line) {
+					// 		this.scrollTop = h
+					// 	} else {
+					// 		this.scrollTop += page.base.line
+					// 	}
+					// }
 					break
 				case 75: // up k
 					e.preventDefault()
-					if (this.scrollTop > 0) {
-						if (this.scrollTop < page.base.line) {
-							this.scrollTop = 0
-						} else {
-							this.scrollTop -= page.base.line
-						}
-					}
+					page.op.raiseDoc(this)
+					// if (this.scrollTop > 0) {
+					// 	if (this.scrollTop < page.base.line) {
+					// 		this.scrollTop = 0
+					// 	} else {
+					// 		this.scrollTop -= page.base.line
+					// 	}
+					// }
 					break
 				case 76: // right l
 					e.preventDefault()
@@ -485,6 +506,12 @@ $(function () {
 		_t.commands.addCommand({name: "Toggle Fullscreen", bindKey: "F11",
 			exec: page.op.fullScreenEditor
 		})
+		_t.commands.addCommand({name: 'docScrollUp', bindKey: 'Ctrl-Shift-J', exec: function (editor) {
+			page.op.raiseDoc(document.getElementById('docs'))
+		}})
+		_t.commands.addCommand({name: 'docScrollDown', bindKey: 'Ctrl-Shift-K', exec: function (editor) {
+			page.op.lowerDoc(document.getElementById('docs'))
+		}})
 		return _t
 	})()
 	ace.config.loadModule("ace/keyboard/vim", function(m) {
