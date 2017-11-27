@@ -100,13 +100,13 @@ class MenuTree(View):
             'content', 'source_type', 'ispwd', 'pwd').get(pk=pk)
         if ispwd and pwd != md5(data.get('pwd', '')):
             return JsonResponse({'result': 'fail', 'msg': 'inviable password'})
-        if source is True:
-            return JsonResponse({'result': 'ok', 'doc': d})
+        if source_type == 'rst':
+            html = rst(d)
         else:
-            if source_type == 'rst':
-                html = rst(d)
-            else:
-                html = markdown(d)
+            html = markdown(d)
+        if source is True:
+            return JsonResponse({'result': 'ok', 'doc': html, 'source': d})
+        else:
             return JsonResponse({'result': 'ok', 'doc': html})
 
     def put(self, request, *args, **kwargs):

@@ -21,6 +21,7 @@ class DocModel(models.Model):
 		return self.title
 
 	ispwd = models.BooleanField(default=False)
+	isdel = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0)
 	# TODO: 改成列表，支持标签引用
 	parent = models.IntegerField(default=0)

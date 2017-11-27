@@ -27,7 +27,8 @@
 		}
 		// contextmenu
 		,submenu_option : {
-			'items' : function(node) {
+			select_node: false
+			,'items' : function(node) {
 				var _tmp = $.jstree.defaults.contextmenu.items()
 				var tmp = {}
 				delete _tmp.create.action
@@ -180,14 +181,16 @@ page.api = {
 		}
 	}
 	,editDoc: function (e, obj) {
+		page.menu.deselect_node(page.menu.get_selected(), true)
+		page.menu.select_node(obj.id, true)
 		$.ajax({
 			type: 'getdoc',
 			url: '/menu/',
 			data: JSON.stringify({'id': obj.id, 'source': true})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
-				$('#docs').css({'bottom': page.base.docs_bottom + '%'});
-				page.editor.session.setValue(resp.doc);
+				$('#docs').html(resp.doc).css({'bottom': page.base.docs_bottom + '%'});
+				page.editor.session.setValue(resp.source);
 				page.editor.focus();
 				$('#editor').show();
 			} else {
