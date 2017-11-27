@@ -415,25 +415,10 @@ page.event = {
 				case 74: // down j
 					e.preventDefault()
 					page.op.lowerDoc(this)
-					// var h = this.scrollHeight - this.clientHeight
-					// if (this.scrollTop < h) {
-					// 	if (h - this.scrollTop < page.base.line) {
-					// 		this.scrollTop = h
-					// 	} else {
-					// 		this.scrollTop += page.base.line
-					// 	}
-					// }
 					break
 				case 75: // up k
 					e.preventDefault()
 					page.op.raiseDoc(this)
-					// if (this.scrollTop > 0) {
-					// 	if (this.scrollTop < page.base.line) {
-					// 		this.scrollTop = 0
-					// 	} else {
-					// 		this.scrollTop -= page.base.line
-					// 	}
-					// }
 					break
 				case 76: // right l
 					e.preventDefault()
@@ -506,10 +491,10 @@ $(function () {
 		_t.commands.addCommand({name: "Toggle Fullscreen", bindKey: "F11",
 			exec: page.op.fullScreenEditor
 		})
-		_t.commands.addCommand({name: 'docScrollUp', bindKey: 'Ctrl-Shift-J', exec: function (editor) {
+		_t.commands.addCommand({name: 'docScrollUp', bindKey: 'Ctrl-Shift-K', exec: function (editor) {
 			page.op.raiseDoc(document.getElementById('docs'))
 		}})
-		_t.commands.addCommand({name: 'docScrollDown', bindKey: 'Ctrl-Shift-K', exec: function (editor) {
+		_t.commands.addCommand({name: 'docScrollDown', bindKey: 'Ctrl-Shift-J', exec: function (editor) {
 			page.op.lowerDoc(document.getElementById('docs'))
 		}})
 		return _t

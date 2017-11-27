@@ -2,6 +2,7 @@
 
 import json
 from functools import wraps
+from hashlib import md5
 
 from django.utils.decorators import available_attrs
 from django.utils.decorators import method_decorator
@@ -78,10 +79,10 @@ class MenuTree(View):
         title = data['text']
         source_type = data.get('source_type', '')
         _type = data['type']
-        ispwd = 'ispwd' in data and data['ispwd']
-        pwd = data.get('pwd', '')
-        d = DocModel.objects.create(parent=parent, title=title, doctype=_type,
-            source_type=source_type, ispwd=ispwd, pwd=pwd)
+        # ispwd = 'ispwd' in data and data['ispwd']
+        # pwd = data.get('pwd', '')
+        d = DocModel.objects.create(
+            parent=parent, title=title, doctype=_type, source_type=source_type)
         obj = SortedCatlogModel.objects.get(folder=parent)
         children = json.loads(bytes(obj.children))
         children.insert(int(pos), d.pk)
@@ -95,9 +96,9 @@ class MenuTree(View):
         data = json.loads(request.body)
         pk = data['id']
         source = data.get('source')  # 获取源文件用于编辑
-        d, source_type, ispwd, pwd = DocModel.objects.values_list('content',
-            'source_type', 'ispwd', 'pwd').get(pk=pk)
-        if ispwd and pwd != data.get('pwd'):
+        d, source_type, ispwd, pwd = DocModel.objects.values_list(
+            'content', 'source_type', 'ispwd', 'pwd').get(pk=pk)
+        if ispwd and pwd != md5(data.get('pwd', '')):
             return JsonResponse({'result': 'fail', 'msg': 'inviable password'})
         if source is True:
             return JsonResponse({'result': 'ok', 'doc': d})
