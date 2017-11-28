@@ -390,6 +390,10 @@ page.op = {
 			}
 		}
 	}
+	,popPwdPanel: function (callback) {
+		$('#pwd_panel').show()
+
+	}
 }
 
 page.event = {
@@ -475,6 +479,31 @@ page.event = {
 	}
 	,submenuOperation: function () {
 		$('body').on('keydown', '.vakata-context', page.op.vimOpSubmenu)
+	}
+	,pwdpannel: function () {
+		$('#pwd_confirm').on('click', function (e) {
+			var dom = $('#password')
+			var d = {id: dom.val(), pwd: dom.attr('pwd')}
+			// page.menu.select_node(obj.id, true)
+			if (dom.attr('source')) {
+				d.source = true
+			}
+			$.ajax({
+				type: 'getdoc',
+				url: '/menu/',
+				data: JSON.stringify(d)
+			}).done(function (resp) {
+				if (resp.result == 'ok') {
+					$('#docs').html(resp.doc).css('bottom', 0)
+					$('#editor').hide()
+					page.menu.select_node(id, true)
+				} else {
+					alert(resp.msg)
+				}
+			}).fail(function (msg) {
+				alert(msg)
+			})
+		})
 	}
 }
 

@@ -1,24 +1,25 @@
 window.page = {
 	mask: function (isClear) {
-			var maskLayer = document.getElementById('rui_mask')
-			if (!maskLayer) {
-				maskLayer = document.createElement('div')
-				maskLayer.id = 'rui_mask'
-				maskLayer.className = 'rui-mask'
-				maskLayer.style.display = 'none'
-				document.body.appendChild(maskLayer)
-			}
-			if (!!isClear) {
-				maskLayer.style.display = 'none'
-			} else {
-				maskLayer.style.display = 'block'
-			}
+		var maskLayer = document.getElementById('rui_mask')
+		if (!maskLayer) {
+			maskLayer = document.createElement('div')
+			maskLayer.id = 'rui_mask'
+			maskLayer.className = 'rui-mask'
+			maskLayer.style.display = 'none'
+			document.body.appendChild(maskLayer)
+		}
+		if (!!isClear) {
+			maskLayer.style.display = 'none'
+		} else {
+			maskLayer.style.display = 'block'
 		}
 	}
 	,message: function (title, info) {
+		var panel = $('#msg')
+		if (!panel.lenght) panel = $('<div id="msg"></div>').appendTo($('body'))
 		var msg = $('<div class="msg-item"><h6>' + (title || '') + '</h6><p>'
 		            + (info || '') + '</p></div>')
-		$('#msg').append(msg)
+		panel.append(msg)
 		msg.delay(3000).fadeOut(2000, function(){msg.remove()})
 	}
 	,alert: function (title, msg) {

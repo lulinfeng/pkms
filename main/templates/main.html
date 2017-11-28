@@ -33,7 +33,20 @@
 	</div>
 	<div class="editor" id="editor"></div>
 </section>
+
+<div class="pop-panel">
+    <p class="pop-panel-header">请输入密码</p>
+	<label>
+		<input name="password" type="password" />
+	</label>
+    <div class="pop-panel-footer">
+        <button id="pwd_confirm">确定</button>
+        <button id="pwd_cancle">取消</button>
+    </div>
+</div>
+
 <script src="{% static "modules/jquery-1.11.2.min.js" %}"></script>
 <script src="{% static "modules/jstree/jstree.min.js" %}"></script>
 <script src="{% static "modules/ace/ace.js" %}"></script>
+<script src="{% static "common.js" %}"></script>
 <script src="{% static "main.js" %}"></script>
