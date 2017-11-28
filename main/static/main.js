@@ -88,7 +88,7 @@ page.api = {
 			if (resp.result == 'ok') {
 				data.instance.set_id(data.node, resp.id)
 				if (data.node.type == 'file') {
-					$('#docs').css({bottom: page.base.docs_bottom + '%'})
+					$('#docs').css({bottom: page.base.docs_bottom + '%'}).empty()
 					data.instance.deselect_all()
 					data.instance.select_node(data.node, true)
 					$('#editor').css({top: page.base.editor_top + '%'}).show()
