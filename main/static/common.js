@@ -16,7 +16,7 @@ window.page = {
 	}
 	,message: function (title, info) {
 		var panel = $('#msg')
-		if (!panel.lenght) panel = $('<div id="msg"></div>').appendTo($('body'))
+		if (!panel.lenght) panel = $('<div id="msg" class="msg"></div>').appendTo($('body'))
 		var msg = $('<div class="msg-item"><h6>' + (title || '') + '</h6><p>'
 		            + (info || '') + '</p></div>')
 		panel.append(msg)

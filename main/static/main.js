@@ -9,7 +9,13 @@
 			'core': {
 				'data': {
 					'url': '/menu/',
-					'data': function (d) {return {'id': d.id}},
+					'data': function (d) {
+						if (d.type && d.type.startsWith('pwd')) {
+							return {id: d.id, pwd: d.data && d.data.pwd}
+						} else {
+							return {id: d.id}
+						}
+					}
 				},
 				'check_callback': true,
 				'multiple': false,
@@ -21,7 +27,9 @@
 			'force_text' : true,
 			'types' : {
 				'file' : { 'valid_children' : [], 'icon' : 'jstree-file' },
+				'pwdfile' : { 'valid_children' : [], 'icon' : 'jstree-file' },
 				'folder' : {'icon' : 'jstree-folder' },
+				'pwdfolder' : {'icon' : 'jstree-folder' },
 			},
 			'plugins' : ['state','dnd','types','contextmenu', 'themes']
 		}
@@ -59,6 +67,13 @@
 						var inst = $.jstree.reference(data.reference),
 							obj = inst.get_node(data.reference)
 						inst.trigger('edit', obj)
+					}
+				}
+				tmp['password'] = {
+					label: 'Password'
+					,action: function (data) {
+						// set or modify password.
+						page.pwdpanel.setpwd(data)
 					}
 				}
 				tmp['rename'] = _tmp.rename
@@ -227,6 +242,20 @@ page.api = {
 			}
 		})
 	}
+	,setpwd: function (id, pwd) {
+		$.ajax({
+			type: 'setpwd',
+			url: '/menu/',
+			data: JSON.stringify({id: id, pwd: pwd})
+		}).done(function (resp) {
+			page.menu.get_node(page.menu.get_selected(), true).find('a').focus()
+			if (resp.result == 'ok') {
+				page.message('success')
+			} else {
+				page.alert('', 'failed to set password')
+			}
+		})
+	}
 }
 
 page.op = {
@@ -273,63 +302,6 @@ page.op = {
 		}
 		page.base.fullScreen = !page.base.fullScreen
 		page.editor.resize()
-	}
-	,vimOpMenu: function (e) {
-		if (e.target.tagName && e.target.tagName.toLowerCase() == 'input') {return;}
-		var o = null;
-		switch(e.which) {
-			case 72: // left h
-				e.preventDefault();
-				if(this.is_open(e.currentTarget)) {
-					this.close_node(e.currentTarget);
-				}
-				else {
-					o = this.get_parent(e.currentTarget);
-					if(o && o.id !== $.jstree.root) { this.get_node(o, true).children('.jstree-anchor').focus(); }
-				}
-				break;
-			case 75: // up k
-				e.preventDefault();
-				o = this.get_prev_dom(e.currentTarget);
-				if(o && o.length) { o.children('.jstree-anchor').focus(); }
-				break;
-			case 76: // right l
-				e.preventDefault();
-				if(this.is_closed(e.currentTarget)) {
-					this.open_node(e.currentTarget, function (o) { this.get_node(o, true).children('.jstree-anchor').focus(); });
-				}
-				else if (this.is_open(e.currentTarget)) {
-					o = this.get_node(e.currentTarget, true).children('.jstree-children')[0];
-					if(o) { $(this._firstChild(o)).children('.jstree-anchor').focus(); }
-					else {
-						e.type = "click";
-						$(e.currentTarget).trigger(e);
-					}
-				} else {
-					e.type = "click";
-					$(e.currentTarget).trigger(e);
-				}
-				break;
-			case 74: // down j
-				e.preventDefault();
-				o = this.get_next_dom(e.currentTarget);
-				if(o && o.length) { o.children('.jstree-anchor').focus(); }
-				break;
-			case 71: // home g
-				e.preventDefault();
-				if (e.shiftKey) {
-					this.element.find('.jstree-anchor').filter(':visible').last().focus();
-				} else {
-					o = this._firstChild(this.get_container_ul()[0]);
-					if(o) { $(o).children('.jstree-anchor').filter(':visible').focus(); }
-				}
-				break;
-			case 68: // d pop submenu
-				this.show_contextmenu(e.currentTarget, e.pageX, e.pageY, e);
-				break;
-			default:
-				break;
-		}
 	}
 	,vimOpSubmenu: function (e) {
 		var o = null
@@ -389,10 +361,6 @@ page.op = {
 				el.scrollTop -= page.base.line
 			}
 		}
-	}
-	,popPwdPanel: function (callback) {
-		$('#pwd_panel').show()
-
 	}
 }
 
@@ -465,45 +433,229 @@ page.event = {
 		})
 	}
 	,menuOperation: function () {
-		page.menu.element.on('changed.jstree', page.api.getDoc)
+		page.menu.element//.on('changed.jstree', page.api.getDoc)
+		.on('changed.jstree', function (e, data) {
+			if (data.action == 'select_node') {
+				if (data.node.type.startsWith('pwd')) {
+					var t = data.node.type.endsWith('file') ? 'getdoc' : 'get'
+					page.pwdpanel.show(e, function (pwd) {
+						if (data.node.type.endsWith('file')) {
+							$.ajax({
+								url: '/menu/'
+								,type: 'getdoc'
+								,data: JSON.stringify({id: data.node.id, pwd: pwd})
+							}).done(function (resp) {
+								if (resp.result == 'ok') {
+									$('#docs').html(resp.doc).css('bottom', 0)
+									$('#editor').hide()
+									$(e.target).focus()
+								} else {
+									page.message('permission die')
+									$(e.target).focus()
+								}
+							})
+						} else {
+							obj = page.menu.get_node(data.node);
+							obj.data ? obj.data.pwd = pwd : obj.data = {pwd: pwd}
+							page.menu._load_node(obj, $.proxy(function (status) {
+								obj = this._model.data[obj.id];
+								obj.state.loading = false;
+								obj.state.loaded = status;
+								obj.state.failed = !obj.state.loaded;
+								var dom = this.get_node(obj, true), i = 0, j = 0, m = this._model.data, has_children = false;
+								for(i = 0, j = obj.children.length; i < j; i++) {
+									if(m[obj.children[i]] && !m[obj.children[i]].state.hidden) {
+										has_children = true;
+										break;
+									}
+								}
+								if(obj.state.loaded && dom && dom.length) {
+									dom.removeClass('jstree-closed jstree-open jstree-leaf');
+									if (!has_children) {
+										dom.addClass('jstree-leaf');
+									}
+									else {
+										if (obj.id !== '#') {
+											dom.addClass(obj.state.opened ? 'jstree-open' : 'jstree-closed');
+										}
+									}
+								}
+								dom.removeClass("jstree-loading").attr('aria-busy',false);
+								/**
+								 * triggered after a node is loaded
+								 * @event
+								 * @name load_node.jstree
+								 * @param {Object} node the node that was loading
+								 * @param {Boolean} status was the node loaded successfully
+								 */
+								this.trigger('load_node', { "node" : obj, "status" : status });
+							}, page.menu));
+							$(e.target).focus()
+						}
+					})
+				} else {
+					page.api.getDoc(e, data)
+				}
+			}
+		})
 		.on('delete_node.jstree', page.api.delDoc)
 		.on('rename_node.jstree', page.api.renameMenu)
 		.on('move_node.jstree', page.api.moveMenu)
 		.on('edit.jstree', page.api.editDoc)
-		.on('keydown.jstree', '.jstree-anchor', $.proxy(page.op.vimOpMenu, page.menu))
 		.on('ready.jstree set_state.jstree', function (e, obj) {
 			page.menu.element.focus()
 			var sl = page.menu.get_selected()
 			page.menu.element.find('#'+ sl + '_anchor').focus()
 		})
+		page.menu.keydown_events.h = function (e) {
+			e.preventDefault();
+			if(this.is_open(e.currentTarget)) {
+				this.close_node(e.currentTarget);
+			}
+			else {
+				var o = this.get_parent(e.currentTarget);
+				if(o && o.id !== $.jstree.root) { this.get_node(o, true).children('.jstree-anchor').focus(); }
+			}
+		}
+		page.menu.keydown_events.k = function (e) {
+			e.preventDefault();
+			var o = this.get_prev_dom(e.currentTarget);
+			if(o && o.length) { o.children('.jstree-anchor').focus(); }
+		}
+		page.menu.keydown_events.l = function (e) {
+			e.preventDefault();
+			if(this.is_closed(e.currentTarget)) {
+				var node = this.get_node(e.currentTarget)
+				if (node.type.startsWith('pwd')) {
+					page.pwdpanel.show(e, function (pwd) {
+						node.data ? node.data.pwd=pwd : node.data={pwd: pwd}
+						this.open_node(e.currentTarget, function (o) { this.get_node(o, true).children('.jstree-anchor').focus(); });
+					}, this)
+				} else {
+					this.open_node(e.currentTarget, function (o) { this.get_node(o, true).children('.jstree-anchor').focus(); });
+				}
+			}
+			else if (this.is_open(e.currentTarget)) {
+				var o = this.get_node(e.currentTarget, true).children('.jstree-children')[0];
+				if(o) { $(this._firstChild(o)).children('.jstree-anchor').focus()}
+				else {
+					e.type = "click";
+					$(e.currentTarget).trigger(e);
+				}
+			} else {
+				e.type = "click";
+				$(e.currentTarget).trigger(e);
+			}
+		}
+		page.menu.keydown_events.j = function (e) {
+			e.preventDefault();
+			var o = this.get_next_dom(e.currentTarget);
+			if(o && o.length) { o.children('.jstree-anchor').focus(); }
+		}
+		page.menu.keydown_events.g = function (e) {
+			e.preventDefault();
+			if (e.shiftKey) {
+				this.element.find('.jstree-anchor').filter(':visible').last().focus();
+			} else {
+				var o = this._firstChild(this.get_container_ul()[0]);
+				if(o) { $(o).children('.jstree-anchor').filter(':visible').focus(); }
+			}
+		}
+		page.menu.keydown_events.d = function (e) {
+			this.show_contextmenu(e.currentTarget, e.pageX, e.pageY, e);
+		}
 	}
 	,submenuOperation: function () {
 		$('body').on('keydown', '.vakata-context', page.op.vimOpSubmenu)
 	}
-	,pwdpannel: function () {
-		$('#pwd_confirm').on('click', function (e) {
-			var dom = $('#password')
-			var d = {id: dom.val(), pwd: dom.attr('pwd')}
-			// page.menu.select_node(obj.id, true)
-			if (dom.attr('source')) {
-				d.source = true
-			}
-			$.ajax({
-				type: 'getdoc',
-				url: '/menu/',
-				data: JSON.stringify(d)
-			}).done(function (resp) {
-				if (resp.result == 'ok') {
-					$('#docs').html(resp.doc).css('bottom', 0)
-					$('#editor').hide()
-					page.menu.select_node(id, true)
-				} else {
-					alert(resp.msg)
-				}
-			}).fail(function (msg) {
-				alert(msg)
-			})
+}
+
+var pwdpanel = function () {
+	this.pwd = null
+
+	this.tpl = '<div class="pop-panel">' +
+						'<p class="pop-panel-header">请输入密码</p>' +
+						// '<input name="password" type="password" />' +
+				'</div>';
+	this.ctrl_tpl = '<div class="pop-panel-footer">' +
+							'<button class="pwd-confirm">确定</button>' +
+							'<button class="pwd-cancle">取消</button>' +
+					'</div>';
+	this.init()
+}
+pwdpanel.prototype = {
+	init: function () {
+		this.render()
+	}
+	,render: function () {
+		this.el = $(this.tpl)
+		this.input = $('<input name="password" type="password" />')
+		this.ctrl = $(this.ctrl_tpl)
+		this.el.append(this.input, this.ctrl)
+		$('body').append(this.el)
+		var self = this
+		this.input.on('change', function (e) {
+			self.pwd = this.value
 		})
+		this.ctrl.on('click.cancle', 'button.pwd-cancle', function (e) {
+			self.destory()
+			page.menu.get_node(page.menu.get_selected(), true).find('a').focus()
+		})
+	}
+	,destory: function () {
+		this.pwd = null
+		this.el.hide()
+		this.input.val('')
+	}
+	,show: function (e, callback, parent) {
+		this.el.show()
+		this.input.off('.enter').focus()
+		this.ctrl.off('.confirm')
+		var self = this
+		this.ctrl.on('click.confirm', 'button.pwd-confirm', function (e) {
+			callback && callback.call(parent, self.input.val())
+			self.destory()
+		})
+		this.input.on('keydown.enter', function (e) {
+			if (e.which == 13) {
+				callback && callback.call(parent, e.target.value)
+				self.destory()
+			} else if (e.which == 27) {
+				self.destory()
+				page.menu.get_node(page.menu.get_selected(), true).find('a').focus()
+			}
+		})
+	}
+	,setpwd: function (data) {
+		var obj = page.menu.get_node(data.reference)
+		// already pwd node to change password. else create new password
+		if (obj.type.startsWith('pwd')) {
+			this.changepwd(obj.id, data)
+		} else {
+			this.createpwd(obj.id, data)
+		}
+	}
+	,createpwd(id, data) {
+		this.el.show()
+		this.input.off('.enter').focus()
+		this.ctrl.off('.confirm')
+		var self = this
+		this.ctrl.on('click.confirm', 'button.pwd-confirm', function (e) {
+			page.api.setpwd(id, e.target.value)
+			self.destory()
+		})
+		this.input.on('keydown.enter', function (e) {
+			if (e.which == 13) {
+				page.api.setpwd(id, e.target.value)
+				self.destory()
+			} else if (e.which == 27) {
+				self.destory()
+				page.menu.get_node(page.menu.get_selected(), true).find('a').focus()
+			}
+		})
+	}
+	,changepwd(id, data) {
+
 	}
 }
 
@@ -548,4 +700,5 @@ $(function () {
 	page.event.vimReadDoc()
 	page.event.menuOperation()
 	page.event.submenuOperation()
+	page.pwdpanel = new pwdpanel()
 })

@@ -41,7 +41,7 @@ class MenuTree(View):
 
     http_method_names = [
         'get', 'post', 'put', 'delete', 'head', 'options',
-        'create', 'getdoc', 'rename', 'movenode'
+        'create', 'getdoc', 'rename', 'movenode', 'setpwd',
     ]
 
     def get(self, request, *args, **kwargs):
@@ -54,6 +54,10 @@ class MenuTree(View):
                 [{'id': "0", 'text': 'Root', 'children': True, 'state': {'disabled': True}}],
                 safe=False
             )
+        elif pk not in (0, '0'):
+            d = DocModel.objects.get(pk=pk)
+            if d.doctype.startswith('pwd') and d.pwd != request.GET.get('pwd'):
+                return JsonResponse({'result': 'failed', 'd': []}, safe=False)
         # 按照目录子集合结构排序
         _children_list = SortedCatlogModel.objects.values_list('children', flat=True).get(folder=pk)
         children_list = json.loads(bytes(_children_list))
@@ -70,7 +74,7 @@ class MenuTree(View):
         for i in r:
             if i.get('type') == 'folder':
                 i.update({'children': True})
-        return JsonResponse(r, safe=False)
+        return JsonResponse({'result': 'ok', 'd': r}, safe=False)
 
     def create(self, request, *args, **kwargs):
         data = json.loads(request.body)
@@ -96,11 +100,11 @@ class MenuTree(View):
         data = json.loads(request.body)
         pk = data['id']
         source = data.get('source')  # 获取源文件用于编辑
-        d, source_type, ispwd, pwd = DocModel.objects.values_list(
-            'content', 'source_type', 'ispwd', 'pwd').get(pk=pk)
-        if ispwd and pwd != md5(data.get('pwd', '')):
-            return JsonResponse({'result': 'fail', 'msg': 'inviable password'})
-        if source_type == 'rst':
+        d, source_type, doctype, pwd = DocModel.objects.values_list(
+            'content', 'source_type', 'doctype', 'pwd').get(pk=pk)
+        if doctype.startswith('pwd') and pwd != data.get('pwd', ''):
+            return JsonResponse({'result': 'fail', 'msg': 'permission die'})
+        if source_type.endswith('rst'):
             html = rst(d)
         else:
             html = markdown(d)
@@ -171,3 +175,23 @@ class MenuTree(View):
         _op.children = bytes(_op.children)
         _op.save(update_fields=['children'])
         return JsonResponse({'result': 'ok', 'msg': ''})
+
+    def setpwd(self, request, *args, **kwargs):
+        # set or change password, if doc ispwd is true use change
+        o = json.loads(request.body)
+        print o
+        pk = o.get('id')
+        pwd = o.get('pwd') or ''
+        d = DocModel.objects.get(pk=pk)
+        if d.doctype.startswith('pwd'):
+            # change password
+            if d.pwd != o.get('oldpwd'):
+                return JsonResponse({'result': 'failed', 'msg': 'invalid password'})
+            d.pwd = pwd
+            d.save()
+            return JsonResponse({'result': 'ok'})
+        else:
+            d.doctype = 'pwd%s' % d.doctype
+            d.pwd = pwd
+            d.save()
+            return JsonResponse({'result': 'ok'})
