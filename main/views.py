@@ -29,6 +29,7 @@ class DocView(TemplateView):
     template_name = 'main.html'
 
 
+@method_decorator(my_perm_required('main.menu.setpwd'), name='setpwd')
 @method_decorator(my_perm_required('main.doc.create'), name='create')
 @method_decorator(my_perm_required('main.doc.rename'), name='rename')
 @method_decorator(my_perm_required('main.doc.edit'), name='put')
@@ -72,7 +73,7 @@ class MenuTree(View):
         r = list(r)
         # on jstree ajax mode, the true children means that is a closed folder
         for i in r:
-            if i.get('type') == 'folder':
+            if i.get('type') in ('folder', 'pwdfolder'):
                 i.update({'children': True})
         return JsonResponse({'result': 'ok', 'd': r}, safe=False)
 
@@ -92,7 +93,7 @@ class MenuTree(View):
         children.insert(int(pos), d.pk)
         obj.children = bytes(children)
         obj.save(update_fields=['children'])
-        if _type == 'folder':
+        if _type in ('folder', 'pwdfolder'):
             SortedCatlogModel.objects.create(folder=d.pk, children=bytes([]))
         return JsonResponse({'result': 'ok', 'id': d.pk})
 
@@ -146,7 +147,7 @@ class MenuTree(View):
         s.children = bytes(ch)
         s.save(update_fields=['children'])
         doc.delete()
-        if _type == 'folder':
+        if _type in ('folder', 'pwdfolder'):
             self._delete_folder(pk)
         return JsonResponse({'result': 'ok', 'msg': ''})
 
