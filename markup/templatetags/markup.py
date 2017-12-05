@@ -10,13 +10,17 @@ markup syntaxes to HTML; currently there is support for:
 
     * reStructuredText, which requires docutils from http://docutils.sf.net/
 """
-
+import six
 import warnings
 
 from django import template
 from django.conf import settings
-from django.utils.encoding import smart_str, force_unicode
 from django.utils.safestring import mark_safe
+from django.utils.encoding import smart_str
+if six.PY2:
+    from django.utils.encoding import force_unicode
+else:
+    from django.utils.encoding import force_str as force_unicode
 
 register = template.Library()
 

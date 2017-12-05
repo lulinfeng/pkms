@@ -180,7 +180,6 @@ class MenuTree(View):
     def setpwd(self, request, *args, **kwargs):
         # set or change password, if doc ispwd is true use change
         o = json.loads(request.body)
-        print o
         pk = o.get('id')
         pwd = o.get('pwd') or ''
         d = DocModel.objects.get(pk=pk)
