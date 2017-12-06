@@ -58,13 +58,13 @@ class MenuTree(View):
             return bytes(data)
 
     def get(self, request, *args, **kwargs):
-        pk = request.GET['id']
+        pk = request.GET.get('id', '#')
         if pk == '#':
             SortedCatlogModel.objects.get_or_create(
                 folder=0, defaults={'children': self._bytes([])}
             )
             return JsonResponse(
-                [{'id': "0", 'text': 'Root', 'children': True, 'state': {'disabled': True}}],
+                [{'text': 'Root', 'children': True, 'data': {'id': 0}, 'state': {'disabled': True}}],
                 safe=False
             )
         elif pk not in (0, '0'):
@@ -85,6 +85,7 @@ class MenuTree(View):
         r = list(r)
         # on jstree ajax mode, the true children means that is a closed folder
         for i in r:
+            i['data'] = {'id': i.pop('id')}
             if i.get('type') in ('folder', 'pwdfolder'):
                 i.update({'children': True})
         return JsonResponse({'result': 'ok', 'd': r}, safe=False)

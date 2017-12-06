@@ -10,11 +10,7 @@
 				'data': {
 					'url': '/menu/',
 					'data': function (d) {
-						if (d.type && d.type.startsWith('pwd')) {
-							return {id: d.id, pwd: d.data && d.data.pwd}
-						} else {
-							return {id: d.id}
-						}
+						return d.data || {id: '#'}
 					}
 				},
 				'check_callback': true,
@@ -93,7 +89,7 @@ page.api = {
 			type: 'create',
 			url: '/menu/',
 			data: JSON.stringify({
-				parent: data.node.parent,
+				parent: data.instance.get_node(data.node.parent).data.id,
 				pos: pos,
 				type: data.node.type,
 				text: data.node.text,
@@ -101,7 +97,7 @@ page.api = {
 			})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
-				data.instance.set_id(data.node, resp.id)
+				data.node.data.id = resp.id
 				if (data.node.type == 'file') {
 					$('#docs').css({bottom: page.base.docs_bottom + '%'}).empty()
 					data.instance.deselect_all()
@@ -123,7 +119,6 @@ page.api = {
 	,renameMenu: function (e, data) {
 		if (data.node.data && data.node.data.create) {
 			delete data.node.data.create
-			if (data.node.parent == '#') data.node.parent = 0
 			var pos = $.inArray(data.node.id, data.instance.get_node(data.node.parent).children)
 			page.api.addMenu(pos, data)
 			return
@@ -131,7 +126,7 @@ page.api = {
 		$.ajax({
 			type: 'rename',
 			url: '/menu/',
-			data: JSON.stringify({'id': data.node.id, 'text': data.node.text})
+			data: JSON.stringify({'id': data.node.data.id, 'text': data.node.text})
 		}).done(function (resp) {
 			if (resp.result != 'ok') {
 				alert(resp.msg)
@@ -147,10 +142,10 @@ page.api = {
 			type: 'movenode',
 			url: '/menu',
 			data: JSON.stringify({
-				id: data.node.id,
-				parent: data.parent,
+				id: data.node.data.id,
+				parent: data.instance.get_node(data.parent).data.id,
 				pos: data.position,
-				old_parent: data.old_parent,
+				old_parent: data.instance.get_node(data.old_parent).data.id,
 				old_pos: data.old_position
 			})
 		}).done(function (resp) {
@@ -164,7 +159,7 @@ page.api = {
 		})
 	}
 	,saveDoc: function (editor) {
-		var pk = page.menu.get_selected().pop()
+		var pk = page.menu.get_selected(true)[0].data.id
 		return $.ajax({
 			type: 'put',
 			url: '/menu/',
@@ -182,7 +177,7 @@ page.api = {
 			$.ajax({
 				type: 'getdoc',
 				url: '/menu/',
-				data: JSON.stringify({'id': data.node.id})
+				data: JSON.stringify(data.node.data)
 			}).done(function (resp) {
 				if (resp.result == 'ok') {
 					$('#docs').html(resp.doc).css('bottom', 0)
@@ -197,11 +192,11 @@ page.api = {
 	}
 	,editDoc: function (e, obj) {
 		page.menu.deselect_node(page.menu.get_selected(), true)
-		page.menu.select_node(obj.id, true)
+		page.menu.select_node(obj, true)
 		$.ajax({
 			type: 'getdoc',
 			url: '/menu/',
-			data: JSON.stringify({'id': obj.id, 'source': true})
+			data: JSON.stringify({'id': obj.data.id, 'source': true})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				$('#docs').html(resp.doc).css({'bottom': page.base.docs_bottom + '%'});
@@ -216,14 +211,14 @@ page.api = {
 		});
 	}
 	,delDoc: function (e, data) {
-		if (data.node.id == 0) {
+		if (data.node.data.id == 0) {
 			alert('can not delet the root node!')
 		}
 		if (confirm('delete the document?')) {
 			$.ajax({
 				type: 'delete',
 				url: '/menu/',
-				data: JSON.stringify({'id': data.node.id, type: data.node.type})
+				data: JSON.stringify({'id': data.node.data.id, type: data.node.type})
 			}).done(function (resp) {
 				if (resp.result != 'ok') {
 					alert(resp.msg)
@@ -437,13 +432,13 @@ page.event = {
 		.on('changed.jstree', function (e, data) {
 			if (data.action == 'select_node') {
 				if (data.node.type.startsWith('pwd')) {
-					var t = data.node.type.endsWith('file') ? 'getdoc' : 'get'
+					// var t = data.node.type.endsWith('file') ? 'getdoc' : 'get'
 					page.pwdpanel.show(e, function (pwd) {
 						if (data.node.type.endsWith('file')) {
 							$.ajax({
 								url: '/menu/'
 								,type: 'getdoc'
-								,data: JSON.stringify({id: data.node.id, pwd: pwd})
+								,data: JSON.stringify({id: data.node.data.id, pwd: pwd})
 							}).done(function (resp) {
 								if (resp.result == 'ok') {
 									$('#docs').html(resp.doc).css('bottom', 0)
@@ -456,7 +451,7 @@ page.event = {
 							})
 						} else {
 							obj = page.menu.get_node(data.node);
-							obj.data ? obj.data.pwd = pwd : obj.data = {pwd: pwd}
+							obj.data.pwd = pwd
 							page.menu._load_node(obj, $.proxy(function (status) {
 								obj = this._model.data[obj.id];
 								obj.state.loading = false;
@@ -554,12 +549,12 @@ page.event = {
 		}
 		page.menu.keydown_events.g = function (e) {
 			e.preventDefault();
-			if (e.shiftKey) {
-				this.element.find('.jstree-anchor').filter(':visible').last().focus();
-			} else {
-				var o = this._firstChild(this.get_container_ul()[0]);
-				if(o) { $(o).children('.jstree-anchor').filter(':visible').focus(); }
-			}
+			var o = this._firstChild(this.get_container_ul()[0]);
+			if(o) { $(o).children('.jstree-anchor').filter(':visible').focus(); }
+		}
+		page.menu.keydown_events['shift-g'] = function (e) {
+			e.preventDefault();
+			this.element.find('.jstree-anchor').filter(':visible').last().focus();
 		}
 		page.menu.keydown_events.d = function (e) {
 			this.show_contextmenu(e.currentTarget, e.pageX, e.pageY, e);
