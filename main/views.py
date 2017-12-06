@@ -170,21 +170,24 @@ class MenuTree(View):
 
     def movenode(self, request, *args, **kwargs):
         data = json.loads(request.body)
-        pk = data['id']
+        pk = int(data['id'])
         parent = data['parent']
-        pos = data['pos']
+        pos = int(data['pos'])
         old_parent = data['old_parent']
         # old_pos = data['old_pos']
         _p = SortedCatlogModel.objects.get(folder=parent)
         _p.children = self._loads(_p.children)
-        _p.children.insert(int(pos), int(pk))
+        if old_parent == parent:
+            _p.children.remove(pk)
+        else:
+            _op = SortedCatlogModel.objects.get(folder=old_parent)
+            _op.children = self._loads(_op.children)
+            _op.children.remove(pk)
+            _op.children = self._bytes(_op.children)
+            _op.save(update_fields=['children'])
+        _p.children.insert(pos, pk)
         _p.children = self._bytes(_p.children)
         _p.save(update_fields=['children'])
-        _op = SortedCatlogModel.objects.get(folder=old_parent)
-        _op.children = self._loads(_op.children)
-        _op.children.remove(int(pk))
-        _op.children = self._bytes(_op.children)
-        _op.save(update_fields=['children'])
         return JsonResponse({'result': 'ok', 'msg': ''})
 
     def setpwd(self, request, *args, **kwargs):
