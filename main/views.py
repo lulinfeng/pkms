@@ -1,8 +1,8 @@
 # coding: utf-8
 
+import six
 import json
 from functools import wraps
-from hashlib import md5
 
 from django.utils.decorators import available_attrs
 from django.utils.decorators import method_decorator
@@ -45,11 +45,23 @@ class MenuTree(View):
         'create', 'getdoc', 'rename', 'movenode', 'setpwd',
     ]
 
+    def _loads(self, data):
+        if six.PY3:
+            return json.loads(data)
+        else:
+            return json.loads(bytes(data))
+
+    def _bytes(self, data):
+        if six.PY3:
+            return bytes(str(data), 'utf8')
+        else:
+            return bytes(data)
+
     def get(self, request, *args, **kwargs):
         pk = request.GET['id']
         if pk == '#':
             SortedCatlogModel.objects.get_or_create(
-                folder=0, defaults={'children': bytes([])}
+                folder=0, defaults={'children': self._bytes([])}
             )
             return JsonResponse(
                 [{'id': "0", 'text': 'Root', 'children': True, 'state': {'disabled': True}}],
@@ -61,7 +73,7 @@ class MenuTree(View):
                 return JsonResponse({'result': 'failed', 'd': []}, safe=False)
         # 按照目录子集合结构排序
         _children_list = SortedCatlogModel.objects.values_list('children', flat=True).get(folder=pk)
-        children_list = json.loads(bytes(_children_list))
+        children_list = self._loads(_children_list)
         orderby = Case(*[When(pk=k, then=pos) for pos, k in enumerate(children_list)])
         r = DocModel.objects.filter(pk__in=children_list).values(
             'id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
@@ -89,12 +101,12 @@ class MenuTree(View):
         d = DocModel.objects.create(
             parent=parent, title=title, doctype=_type, source_type=source_type)
         obj = SortedCatlogModel.objects.get(folder=parent)
-        children = json.loads(bytes(obj.children))
+        children = self._loads(obj.children)
         children.insert(int(pos), d.pk)
-        obj.children = bytes(children)
+        obj.children = self._bytes(children)
         obj.save(update_fields=['children'])
         if _type in ('folder', 'pwdfolder'):
-            SortedCatlogModel.objects.create(folder=d.pk, children=bytes([]))
+            SortedCatlogModel.objects.create(folder=d.pk, children=self._bytes([]))
         return JsonResponse({'result': 'ok', 'id': d.pk})
 
     def getdoc(self, request, *args, **kwargs):
@@ -125,7 +137,7 @@ class MenuTree(View):
     def _delete_folder(self, parent_pk):
         f = SortedCatlogModel.objects.filter(folder=parent_pk)
         if f.exists() is True:
-            ch = json.loads(bytes(f.values_list('children', flat=True).get()))
+            ch = self._loads(f.values_list('children', flat=True).get())
             f.delete()
             DocModel.objects.filter(pk__in=ch).delete()
             for pk in ch:
@@ -133,18 +145,16 @@ class MenuTree(View):
 
     def delete(self, request, *args, **kwargs):
         data = json.loads(request.body)
-        pk = int(data['id'])
-        if pk == 0:
-            DocModel.objects.all().delete()
-            SortedCatlogModel.objects.all().delete()
-            return JsonResponse({'result': 'ok', 'msg': ''})
+        pk = data['id']
+        if pk in (0, '0'):
+            return JsonResponse({'result': 'failed', 'msg': "Don't do that!"})
         _type = data['type']
 
         doc = DocModel.objects.get(pk=pk)
         s = SortedCatlogModel.objects.get(folder=doc.parent)
-        ch = json.loads(bytes(s.children))
+        ch = self._loads(s.children)
         ch.remove(pk)
-        s.children = bytes(ch)
+        s.children = self._bytes(ch)
         s.save(update_fields=['children'])
         doc.delete()
         if _type in ('folder', 'pwdfolder'):
@@ -166,14 +176,14 @@ class MenuTree(View):
         old_parent = data['old_parent']
         # old_pos = data['old_pos']
         _p = SortedCatlogModel.objects.get(folder=parent)
-        _p.children = json.loads(bytes(_p.children))
+        _p.children = self._loads(_p.children)
         _p.children.insert(int(pos), int(pk))
-        _p.children = bytes(_p.children)
+        _p.children = self._bytes(_p.children)
         _p.save(update_fields=['children'])
         _op = SortedCatlogModel.objects.get(folder=old_parent)
-        _op.children = json.loads(bytes(_op.children))
+        _op.children = self._loads(_op.children)
         _op.children.remove(int(pk))
-        _op.children = bytes(_op.children)
+        _op.children = self._bytes(_op.children)
         _op.save(update_fields=['children'])
         return JsonResponse({'result': 'ok', 'msg': ''})
 
