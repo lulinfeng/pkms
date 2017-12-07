@@ -21,16 +21,16 @@ class DocModel(models.Model):
 	def __str__(self):
 		return self.title
 
-	ispwd = models.BooleanField(default=False)
 	isdel = models.BooleanField(default=False)
 	status = models.SmallIntegerField(default=0)
 	# TODO: 改成列表，支持标签引用
-	parent = models.IntegerField(default=0)
-	# doc_type: --file(docs), --folder(menu)
+	parent = models.TextField(default='[]')
+	# file|pwdfile|folder|pwdfolder
 	doctype = models.CharField(max_length=10, default='file')
-	# source_type: ''|'restructuredtext'|'markdown'
+	# source_type: ''|'rst'|'md'
 	source_type = models.CharField(max_length=20, default='')
 	tag = models.CharField(max_length=20, default='')
+	# node password
 	pwd = models.CharField(max_length=20, default='')
 	newtime = models.DateTimeField(auto_now_add=True)
 	changetime = models.DateTimeField(auto_now=True)

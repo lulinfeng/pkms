@@ -55,9 +55,6 @@
 				}
 				tmp['create'] = _tmp.create
 				tmp['edit'] = {
-					"separator_before"	: false,
-					"separator_after"	: false,
-					"_disabled"			: false,
 					"label"				: "Edit",
 					"action"			: function (data) {
 						var inst = $.jstree.reference(data.reference),
@@ -74,7 +71,6 @@
 				}
 				tmp['rename'] = _tmp.rename
 				tmp['delete'] = _tmp.remove
-				tmp['operation'] = _tmp.edit
 				tmp['ccp'] = _tmp.ccp
 				return tmp
 			}
@@ -116,7 +112,7 @@ page.api = {
 			$('#editor').hide()
 		})
 	}
-	,renameMenu: function (e, data) {
+	,renameNode: function (e, data) {
 		if (data.node.data && data.node.data.create) {
 			delete data.node.data.create
 			var pos = $.inArray(data.node.id, data.instance.get_node(data.node.parent).children)
@@ -137,12 +133,33 @@ page.api = {
 			data.instance.refresh()
 		})
 	}
-	,moveMenu: function (e, data) {
+	,moveNode: function (e, data) {
 		$.ajax({
 			type: 'movenode',
-			url: '/menu',
+			url: '/menu/',
 			data: JSON.stringify({
 				id: data.node.data.id,
+				parent: data.instance.get_node(data.parent).data.id,
+				pos: data.position,
+				old_parent: data.instance.get_node(data.old_parent).data.id,
+				old_pos: data.old_position
+			})
+		}).done(function (resp) {
+			if (resp.result != 'ok') {
+				alert(resp.msg)
+				data.instance.refresh()
+			}
+		}).fail(function (e) {
+			alert(e)
+			data.instance.refresh()
+		})
+	}
+	,copyNode: function (e, data) {
+		$.ajax({
+			type: 'copynode',
+			url: '/menu/',
+			data: JSON.stringify({
+				id: data.original.data.id,
 				parent: data.instance.get_node(data.parent).data.id,
 				pos: data.position,
 				old_parent: data.instance.get_node(data.old_parent).data.id,
@@ -215,10 +232,11 @@ page.api = {
 			alert('can not delet the root node!')
 		}
 		if (confirm('delete the document?')) {
+			var parent = data.instance.get_node(data.parent).data.id
 			$.ajax({
 				type: 'delete',
 				url: '/menu/',
-				data: JSON.stringify({'id': data.node.data.id, type: data.node.type})
+				data: JSON.stringify({id: data.node.data.id, type: data.node.type, parent: parent})
 			}).done(function (resp) {
 				if (resp.result != 'ok') {
 					alert(resp.msg)
@@ -431,7 +449,7 @@ page.event = {
 		page.menu.element//.on('changed.jstree', page.api.getDoc)
 		.on('changed.jstree', function (e, data) {
 			if (data.action == 'select_node') {
-				if (data.node.type.startsWith('pwd')) {
+				if (data.node.type.startsWith('pwd') && data.instance.is_closed(data.instance.get_node(data.node, 1))) {
 					// var t = data.node.type.endsWith('file') ? 'getdoc' : 'get'
 					page.pwdpanel.show(e, function (pwd) {
 						if (data.node.type.endsWith('file')) {
@@ -494,8 +512,9 @@ page.event = {
 			}
 		})
 		.on('delete_node.jstree', page.api.delDoc)
-		.on('rename_node.jstree', page.api.renameMenu)
-		.on('move_node.jstree', page.api.moveMenu)
+		.on('rename_node.jstree', page.api.renameNode)
+		.on('move_node.jstree', page.api.moveNode)
+		.on('copy_node.jstree', page.api.copyNode)
 		.on('edit.jstree', page.api.editDoc)
 		.on('ready.jstree set_state.jstree', function (e, obj) {
 			page.menu.element.focus()

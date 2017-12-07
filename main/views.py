@@ -43,6 +43,7 @@ class MenuTree(View):
     http_method_names = [
         'get', 'post', 'put', 'delete', 'head', 'options',
         'create', 'getdoc', 'rename', 'movenode', 'setpwd',
+        'copynode',
     ]
 
     def _loads(self, data):
@@ -75,7 +76,7 @@ class MenuTree(View):
         _children_list = SortedCatlogModel.objects.values_list('children', flat=True).get(folder=pk)
         children_list = self._loads(_children_list)
         orderby = Case(*[When(pk=k, then=pos) for pos, k in enumerate(children_list)])
-        r = DocModel.objects.filter(pk__in=children_list).values(
+        r = DocModel.objects.filter(pk__in=children_list, isdel=False).values(
             'id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
         # r = [{"id":1,"text":"Root node","children":[
         #     {"id":2,"text":"Child node 1","children":True},
@@ -97,10 +98,8 @@ class MenuTree(View):
         title = data['text']
         source_type = data.get('source_type', '')
         _type = data['type']
-        # ispwd = 'ispwd' in data and data['ispwd']
-        # pwd = data.get('pwd', '')
         d = DocModel.objects.create(
-            parent=parent, title=title, doctype=_type, source_type=source_type)
+            parent=str([parent]), title=title, doctype=_type, source_type=source_type)
         obj = SortedCatlogModel.objects.get(folder=parent)
         children = self._loads(obj.children)
         children.insert(int(pos), d.pk)
@@ -135,8 +134,8 @@ class MenuTree(View):
 
         return JsonResponse({'result': 'ok', 'msg': '', 'doc': rst(data['content'])})
 
-    def _delete_folder(self, parent_pk):
-        f = SortedCatlogModel.objects.filter(folder=parent_pk)
+    def _delete_folder(self, folder_id):
+        f = SortedCatlogModel.objects.filter(folder=folder_id)
         if f.exists() is True:
             ch = self._loads(f.values_list('children', flat=True).get())
             f.delete()
@@ -145,19 +144,29 @@ class MenuTree(View):
                 self._delete_folder(pk)
 
     def delete(self, request, *args, **kwargs):
+        # 多标签删除
         data = json.loads(request.body)
         pk = data['id']
         if pk in (0, '0'):
             return JsonResponse({'result': 'failed', 'msg': "Don't do that!"})
         _type = data['type']
+        parent = data['parent']
 
         doc = DocModel.objects.get(pk=pk)
-        s = SortedCatlogModel.objects.get(folder=doc.parent)
+        # parent keep the last one and set boolean isdel
+        parents = json.loads(doc.parent)
+        if (parents) == 1:
+            doc.isdel = True
+        else:
+            parents.remove(parent)
+        doc.save()
+        # delete form catlog
+        s = SortedCatlogModel.objects.get(folder=parent)
         ch = self._loads(s.children)
         ch.remove(pk)
         s.children = self._bytes(ch)
         s.save(update_fields=['children'])
-        doc.delete()
+        # recursively delete sub node
         if _type in ('folder', 'pwdfolder'):
             self._delete_folder(pk)
         return JsonResponse({'result': 'ok', 'msg': ''})
@@ -172,27 +181,37 @@ class MenuTree(View):
     def movenode(self, request, *args, **kwargs):
         data = json.loads(request.body)
         pk = int(data['id'])
-        parent = data['parent']
+        target_pk = data['parent']
         pos = int(data['pos'])
-        old_parent = data['old_parent']
+        source_pk = data['old_parent']
         # old_pos = data['old_pos']
-        _p = SortedCatlogModel.objects.get(folder=parent)
-        _p.children = self._loads(_p.children)
-        if old_parent == parent:
-            _p.children.remove(pk)
+
+        target_folder = SortedCatlogModel.objects.get(folder=target_pk)
+        target_folder.children = self._loads(target_folder.children)
+        if source_pk == target_pk:
+            target_folder.children.remove(pk)
         else:
-            _op = SortedCatlogModel.objects.get(folder=old_parent)
-            _op.children = self._loads(_op.children)
-            _op.children.remove(pk)
-            _op.children = self._bytes(_op.children)
-            _op.save(update_fields=['children'])
-        _p.children.insert(pos, pk)
-        _p.children = self._bytes(_p.children)
-        _p.save(update_fields=['children'])
+            # if target parent has already exists return failed
+            doc = DocModel.objects.get(pk=pk)
+            doc_parents = json.loads(doc.parent)
+            if target_pk in doc_parents:
+                return JsonResponse({'result': 'failed', 'msg': 'node has already exists in target'})
+            doc_parents.remove(source_pk)
+            doc_parents.append(target_pk)
+            doc.parent = str(doc_parents)
+            doc.save(update_fields=['parent'])
+            old_folder = SortedCatlogModel.objects.get(folder=source_pk)
+            old_folder.children = self._loads(old_folder.children)
+            old_folder.children.remove(pk)
+            old_folder.children = self._bytes(old_folder.children)
+            old_folder.save(update_fields=['children'])
+        target_folder.children.insert(pos, pk)
+        target_folder.children = self._bytes(target_folder.children)
+        target_folder.save(update_fields=['children'])
         return JsonResponse({'result': 'ok', 'msg': ''})
 
     def setpwd(self, request, *args, **kwargs):
-        # set or change password, if doc ispwd is true use change
+        # set or change password, if doc already set pwd use change
         o = json.loads(request.body)
         pk = o.get('id')
         pwd = o.get('pwd') or ''
@@ -209,3 +228,30 @@ class MenuTree(View):
             d.pwd = pwd
             d.save()
             return JsonResponse({'result': 'ok'})
+
+    def copynode(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        pk = int(data['id'])
+        target_pk = data['parent']
+        pos = int(data['pos'])
+        source_pk = data['old_parent']
+
+        # same folder or target has already exists return failed
+        if source_pk == target_pk:
+            return JsonResponse({'result': 'failed', 'msg': 'node has already exists in target'})
+
+        doc = DocModel.objects.get(pk=pk)
+        doc_parents = json.loads(doc.parent)
+        if target_pk in doc_parents:
+            return JsonResponse({'result': 'failed', 'msg': 'node has already exists in target'})
+
+        doc_parents.append(target_pk)
+        doc.parent = str(doc_parents)
+        doc.save(update_fields=['parent'])
+
+        target_folder = SortedCatlogModel.objects.get(folder=target_pk)
+        target_folder.children = self._loads(target_folder.children)
+        target_folder.children.insert(pos, pk)
+        target_folder.children = self._bytes(target_folder.children)
+        target_folder.save(update_fields=['children'])
+        return JsonResponse({'result': 'ok', 'msg': ''})
