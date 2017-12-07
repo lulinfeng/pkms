@@ -233,12 +233,15 @@ page.api = {
 		}
 		if (confirm('delete the document?')) {
 			var parent = data.instance.get_node(data.parent).data.id
+			var prev_dom = data.instance.get_prev_dom(data.node)
 			$.ajax({
 				type: 'delete',
 				url: '/menu/',
 				data: JSON.stringify({id: data.node.data.id, type: data.node.type, parent: parent})
 			}).done(function (resp) {
-				if (resp.result != 'ok') {
+				if (resp.result == 'ok') {
+					data.instance.get_node(prev_dom, true).find('a').focus()
+				} else {
 					alert(resp.msg)
 					data.instance.refresh()
 				}
