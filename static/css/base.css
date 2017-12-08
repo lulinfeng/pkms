@@ -1,94 +1,7 @@
-﻿/*---------------重置样式 ，YUI 3.6.0 -----------------*/
-html{color:#000;overflow: hidden;}
+﻿html{color:#000;overflow: hidden;}
 body{font:normal 12px/1.5 arial,"Microsoft Yahei",sans-serif;color: #3f3f3f; background-color: #f3f3f3;overflow: hidden;}
-div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{margin:0;padding:0}
-table{border-collapse:collapse;border-spacing:0}
-fieldset,img{border:0}
-address,caption,cite,code,dfn,em,strong,th,var{font-style:normal;font-weight:normal}
-ol,ul{list-style:none}
-caption,th{text-align:left}
-input,textarea,select{font-family:inherit;font-size:inherit;font-weight:inherit}
-input,textarea,select{*font-size:100%}
-legend{color:#000}
 a{color:#333;text-decoration:none;outline: none}
 a:hover{color:#34A1DA;text-decoration:none;text-decoration: none;}
-select{height:32px;font-size:14px;}
-input{font-size:14px;}
-
-/* 查询条件栏 */
-.filter-bar{padding-left : 10px; height: 40px; line-height: 40px; font-size: 14px; }
-.filter-bar input:not([type=checkbox]):not([type=radio]), .filter-bar .select{
-	width: 120px;
-	line-height: 24px;
-	height: 24px;
-	border-radius: 5px;
-	text-align: center;
-	background:none;
-	margin-right: 20px;
-}
-.datefilter{position: relative; display: inline-block; line-height: 24px; height: 24px; margin: 0 12px; }
-.datefilter label{cursor: pointer;}
-.datefilter input{display:none; }
-.datefilter .radio{position: relative; display: inline-block; height: 14px; width: 14px; border: 1px solid #A6BACA; border-radius: 10px; background: #2095f0; box-shadow: inset 0 0 0 10px #fff; top: 2px; margin-right: 3px; transition: all 180ms ease; }
-.datefilter input:checked + .radio{border: 1px solid #2095f0; box-shadow: inset 0 0 0 3px #fff; }
-
-.date-module{
-	display: inline-block;
-}
-.date-module input {
-	border: 1px solid #ccc;
-	-moz-border-radius:6px;
-	-webkit-border-radius:6px;
-	border-radius:6px;
-	width: 120px;
-	text-align: center;
-	/*margin: 0 5px;*/
-}
-
-/* 按钮 */
-.smb-btn {
-	-moz-box-shadow:inset 0px 1px 0px 0px #7AB1E7;
-	-webkit-box-shadow:inset 0px 1px 0px 0px #7AB1E7;
-	box-shadow:inset 0px 1px 0px 0px #7AB1E7;
-	background:-webkit-linear-gradient(top, #2c83d7 5%, #003670 100%);
-	background:-o-linear-gradient(top, #2c83d7 5%, #003670 100%);
-	background:-ms-linear-gradient(top, #2c83d7 5%, #003670 100%);
-	background:linear-gradient(to bottom, #2c83d7 5%, #003670 100%);
-	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#2c83d7', endColorstr='#003670',GradientType=0);
-	-moz-border-radius:3px;
-	-webkit-border-radius:3px;
-	border-radius:3px;
-	display:inline-block;
-	cursor:pointer;
-	color:#ffffff;
-	font-family:arial;
-	font-size:12px;
-	padding:1px 15px;
-	text-decoration:none;
-	line-height: 20px;
-	margin: 0 4px;
-	border: 1px solid #6EA1D2;
-	background-color: #2c83d7;
-}
-.smb-btn:hover {
-	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #003670), color-stop(1, #2c83d7));
-	background:-moz-linear-gradient(top, #003670 5%, #2c83d7 100%);
-	background:-webkit-linear-gradient(top, #003670 5%, #2c83d7 100%);
-	background:-o-linear-gradient(top, #003670 5%, #2c83d7 100%);
-	background:-ms-linear-gradient(top, #003670 5%, #2c83d7 100%);
-	background:linear-gradient(to bottom, #003670 5%, #2c83d7 100%);
-	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#003670', endColorstr='#2c83d7',GradientType=0);
-	background-color:#003670;
-}
-.smb-btn:active {
-	position:relative;
-	top:1px;
-}
-
-/*---- 去掉鼠标按下的效果 ----*/
-a,button,select,input{ outline:none; }
-a:focus,a:active,button::-moz-focus-inner,select::-moz-focus-inner{border: 0;outline : 0;}
-input::-moz-focus-inner{border: 0;outline : 0; }
 
 /* 页面右上角提示信息框 */
 .msg{
@@ -161,9 +74,9 @@ button.close{
 	top: 40px;
 	bottom: 0px;
 	background: #333;
+	left: 0px;;
 }
-.docs {outline: none;top: 45px;position: fixed;left: 210px;right: 0;bottom: 0;overflow: scroll;height: auto;width: auto;}
-.main {left:210px;top:45px;right:0px;position:fixed;bottom: 0px;overflow:auto;}
+.docs {outline: none;top: 45px;position: fixed;left: 210px;right: 0;bottom: 0;overflow: scroll;height: auto;width: auto;font-size: 13px;}
 .editor {
 	display: none;
 	height: auto;;
@@ -176,7 +89,7 @@ button.close{
 	width: auto;
 	left: 200px;
 }
-#header {position:fixed;border-bottom:1px solid #b1b1b1;width:100%;height:40px;z-index:100;background:#ebebeb;padding:10px;}
+#header {position:fixed;border-bottom:1px solid #b1b1b1;width:100%;height:40px;z-index:100;background:#ebebeb;left:0;top:0;line-height:40px;}
 .ace_editor.fullScreen {
 	top: 40px;
 }
