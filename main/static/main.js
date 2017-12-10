@@ -5,6 +5,8 @@
 		,docs_bottom: 50
 		,editor_top: 50
 		,fullScreen: false
+		,fullHeight: false
+		,L_R_pos: 200
 		,menu_option: {
 			'core': {
 				'data': {
@@ -312,11 +314,20 @@ page.op = {
 	}
 	,fullScreenEditor: function (editor) {
 		if (!page.base.fullScreen) {
-			$('#editor').css({top: '40px'})
+			$('#editor').css({top: '40px', left: 0})
 		} else {
-			$('#editor').css({top: page.base.editor_top + '%'})
+			$('#editor').css({top: page.base.editor_top + '%', left: page.base.L_R_pos})
 		}
 		page.base.fullScreen = !page.base.fullScreen
+		page.editor.resize()
+	}
+	,fullHeightEditor: function (editor) {
+		if (!page.base.fullHeight) {
+			$('#editor').css({top: '40px'})
+		} else {
+			$('#editor').css({top: page.base.editor_top + '%', left: page.base.L_R_pos})
+		}
+		page.base.fullHeight = !page.base.fullHeight
 		page.editor.resize()
 	}
 	,vimOpSubmenu: function (e) {
@@ -377,6 +388,23 @@ page.op = {
 				el.scrollTop -= page.base.line
 			}
 		}
+	}
+	,increaseEditor: function (editor) {
+		editor.setFontSize(editor.getFontSize() + 1)
+	}
+	,decreaseEditor: function (editor) {
+		var size = editor.getFontSize()
+		if (size == 12) return
+		editor.setFontSize(size - 1)
+	}
+	,increaseDoc: function (el) {
+		var size = parseInt(el.style.fontSize.replace('px', '') || 13)
+		el.style.fontSize = size + 1
+	}
+	,decreaseDoc: function (el) {
+		var size = parseInt(el.style.fontSize.replace('px', '') || 13)
+		if (size == 12) return
+		el.style.fontSize = size - 1
 	}
 }
 
@@ -441,6 +469,18 @@ page.event = {
 						} else {
 							this.scrollTop += page.base.page
 						}
+					}
+					break
+				case 107: // +
+					if (e.altKey) {
+						// increase font size
+						page.op.increaseDoc(this)
+					}
+					break
+				case 109: // -
+					if (e.altKey) {
+						// decrease font size
+						page.op.decreaseDoc(this)
 					}
 					break
 				default:
@@ -585,6 +625,28 @@ page.event = {
 	,submenuOperation: function () {
 		$('body').on('keydown', '.vakata-context', page.op.vimOpSubmenu)
 	}
+	,leftRightWidth: function () {
+		$('body').on('keydown', function (e) {
+			if (e.altKey && e.shiftKey) {
+				if (e.which == 78) {
+					e.preventDefault()
+					if (page.base.L_R_pos == 0) return
+					page.base.L_R_pos -= 5
+					$('.menu').width(page.base.L_R_pos)
+					$('.docs').css({left: page.base.L_R_pos + 10})
+					$('.editor').css({left: page.base.L_R_pos})
+					page.editor.resize()
+				} else if (e.which == 77) {
+					e.preventDefault()
+					page.base.L_R_pos += 5
+					$('.menu').width(page.base.L_R_pos)
+					$('.docs').css({left: page.base.L_R_pos + 10})
+					$('.editor').css({left: page.base.L_R_pos})
+					page.editor.resize()
+				}
+			}
+		})
+	}
 }
 
 var pwdpanel = function () {
@@ -692,11 +754,24 @@ $(function () {
 		_t.commands.addCommand({name: "Toggle Fullscreen", bindKey: "F11",
 			exec: page.op.fullScreenEditor
 		})
+		_t.commands.addCommand({name: "Toggle Max Height", bindKey: "F10",
+			exec: page.op.fullHeightEditor
+		})
+		// increase font size
+		_t.commands.addCommand({name: 'increase', bindKey: 'Alt-+', exec: page.op.increaseEditor})
+		// decrease font size
+		_t.commands.addCommand({name: 'decrease', bindKey: 'Alt--', exec: page.op.decreaseEditor})
 		_t.commands.addCommand({name: 'docScrollUp', bindKey: 'Ctrl-Shift-K', exec: function (editor) {
 			page.op.raiseDoc(document.getElementById('docs'))
 		}})
 		_t.commands.addCommand({name: 'docScrollDown', bindKey: 'Ctrl-Shift-J', exec: function (editor) {
 			page.op.lowerDoc(document.getElementById('docs'))
+		}})
+		_t.commands.addCommand({name: 'docIncrease', bindKey: 'Alt-Shift-+', exec: function (editor) {
+			page.op.increaseDoc(document.getElementById('docs'))
+		}})
+		_t.commands.addCommand({name: 'docDecrease', bindKey: 'Alt-Shift--', exec: function (editor) {
+			page.op.decreaseDoc(document.getElementById('docs'))
 		}})
 		return _t
 	})()
@@ -717,5 +792,6 @@ $(function () {
 	page.event.vimReadDoc()
 	page.event.menuOperation()
 	page.event.submenuOperation()
+	page.event.leftRightWidth()
 	page.pwdpanel = new pwdpanel()
 })
