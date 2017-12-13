@@ -1,15 +1,20 @@
 # coding: utf-8
 
+import os
+import time
 import six
 import json
 from functools import wraps
 
-from django.utils.decorators import available_attrs
-from django.utils.decorators import method_decorator
+from django.utils.decorators import available_attrs, method_decorator
+from django.contrib.auth.decorators import permission_required
+from django.utils.timezone import now
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
 from django.db.models import F, Case, When
+from django.core.files.storage import default_storage
 
+from django.conf import settings
 from markup.templatetags.markup import restructuredtext as rst, markdown
 from main.models import DocModel, SortedCatlogModel
 
@@ -255,3 +260,24 @@ class MenuTree(View):
         target_folder.children = self._bytes(target_folder.children)
         target_folder.save(update_fields=['children'])
         return JsonResponse({'result': 'ok', 'msg': ''})
+
+
+def upload_file(request):
+    if request.method != 'POST':
+        return JsonResponse({'result': 'failed', 'msg': '!!!'})
+    if not request.user.has_perm('main.can_upload'):
+        return JsonResponse({'result': 'failed', 'msg': 'permission die!'})
+
+    media = request.FILES['data']
+    n = now()
+    day_path = '%s' % n.strftime('%Y%m%d')
+    file_path = os.path.join(settings.MEDIA_ROOT, day_path)
+    if not os.path.exists(file_path):
+        os.makedirs(file_path)
+    filename = '%d.%s' % (int(time.time()), media.content_type.split('/')[-1])
+    default_storage.save(os.path.join(file_path, filename), media)
+    # with open(os.path.join(file_path, filename), 'wb+') as f:
+    #     for chunk in media.chunks():
+    #         f.write(chunk)
+    return JsonResponse({'result': 'ok',
+            'path': os.path.join(settings.MEDIA_URL, day_path, filename)})
