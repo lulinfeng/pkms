@@ -74,9 +74,10 @@ require("../config").defineOptions(Editor.prototype, "editor", {
                   }).done(function (resp) {
                     if (resp.result == 'ok') {
                       session.widgetManager.removeLineWidget(w)
-                      var lines = ['', '.. figure:: ' + resp.path, '    :width: 100 px', '']
+                      var lines = ['', '.. figure:: ' + resp.path, '']
                       session.doc.insertLines(pos.row, lines)
                       session.widgetManager.removeLineWidget(w)
+                      editor.focus()
                     } else {
                       alert(resp.msg)
                     }
