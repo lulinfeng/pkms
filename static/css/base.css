@@ -1,8 +1,5 @@
 ﻿html{color:#000;overflow: hidden;}
 body{font:normal 12px/1.5 arial,"Microsoft Yahei",sans-serif;color: #3f3f3f; background-color: #f3f3f3;overflow: hidden;}
-a{color:#333;text-decoration:none;outline: none}
-a:hover{color:#34A1DA;text-decoration:none;text-decoration: none;}
-
 /* 页面右上角提示信息框 */
 .msg{
 	position: absolute;
