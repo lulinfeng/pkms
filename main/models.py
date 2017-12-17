@@ -21,7 +21,11 @@ class DocModel(models.Model):
 	def __str__(self):
 		return self.title
 
+	def __unicode__(self):
+		return self.title
+
 	isdel = models.BooleanField(default=False)
+	# 1 published
 	status = models.SmallIntegerField(default=0)
 	# TODO: 改成列表，支持标签引用
 	parent = models.TextField(default='[]')

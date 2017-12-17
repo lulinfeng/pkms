@@ -7,7 +7,7 @@ import json
 from functools import wraps
 
 from django.utils.decorators import available_attrs, method_decorator
-from django.contrib.auth.decorators import permission_required
+# from django.contrib.auth.decorators import permission_required
 from django.utils.timezone import now
 from django.http import JsonResponse
 from django.views.generic import TemplateView, View
@@ -81,8 +81,14 @@ class MenuTree(View):
         _children_list = SortedCatlogModel.objects.values_list('children', flat=True).get(folder=pk)
         children_list = self._loads(_children_list)
         orderby = Case(*[When(pk=k, then=pos) for pos, k in enumerate(children_list)])
-        r = DocModel.objects.filter(pk__in=children_list, isdel=False).values(
-            'id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
+        if not request.user.is_anonymous():
+            # all doc
+            r = DocModel.objects.filter(pk__in=children_list, isdel=False).values(
+                'id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
+        else:
+            # published doc
+            r = DocModel.objects.filter(pk__in=children_list, isdel=False, status=1).values(
+                'id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
         # r = [{"id":1,"text":"Root node","children":[
         #     {"id":2,"text":"Child node 1","children":True},
         #     {"id":3,"text":"Child node 2"}
@@ -132,7 +138,8 @@ class MenuTree(View):
             return JsonResponse({'result': 'ok', 'doc': html})
 
     def put(self, request, *args, **kwargs):
-        # 保存doc
+        # save doc
+        # TODO: permisstion
         data = json.loads(request.body)
         pk = data['id']
         DocModel.objects.filter(pk=pk).update(content=data['content'])
@@ -279,5 +286,7 @@ def upload_file(request):
     # with open(os.path.join(file_path, filename), 'wb+') as f:
     #     for chunk in media.chunks():
     #         f.write(chunk)
-    return JsonResponse({'result': 'ok',
-            'path': os.path.join(settings.MEDIA_URL, day_path, filename)})
+    return JsonResponse({
+        'result': 'ok',
+        'path': os.path.join(settings.MEDIA_URL, day_path, filename)
+    })
