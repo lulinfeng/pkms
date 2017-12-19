@@ -81,7 +81,7 @@ class MenuTree(View):
         _children_list = SortedCatlogModel.objects.values_list('children', flat=True).get(folder=pk)
         children_list = self._loads(_children_list)
         orderby = Case(*[When(pk=k, then=pos) for pos, k in enumerate(children_list)])
-        if not request.user.is_anonymous():
+        if request.user.is_authenticated:
             # all doc
             r = DocModel.objects.filter(pk__in=children_list, isdel=False).values(
                 'id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
