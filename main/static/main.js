@@ -628,6 +628,21 @@ page.event = {
 	,leftRightWidth: function () {
 		$('body').on('keydown', function (e) {
 			if (e.altKey && e.shiftKey) {
+				if (e.which == 78) {
+					e.preventDefault()
+					if (page.base.L_R_pos == 0) return
+					page.base.L_R_pos -= 5
+					$('.menu').width(0)
+					$('.docs').css({left: 10})
+					$('.editor').css({left: 0})
+					page.editor.resize()
+				} else if (e.which == 77) {
+					e.preventDefault()
+					$('.menu').width(page.base.L_R_pos)
+					$('.docs').css({left: page.base.L_R_pos + 10})
+					$('.editor').css({left: page.base.L_R_pos})
+					page.editor.resize()
+				}
 				if (e.which == 188) {
 					e.preventDefault()
 					if (page.base.L_R_pos == 0) return
