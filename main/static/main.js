@@ -628,7 +628,7 @@ page.event = {
 	,leftRightWidth: function () {
 		$('body').on('keydown', function (e) {
 			if (e.altKey && e.shiftKey) {
-				if (e.which == 78) {
+				if (e.which == 188) {
 					e.preventDefault()
 					if (page.base.L_R_pos == 0) return
 					page.base.L_R_pos -= 5
@@ -636,7 +636,7 @@ page.event = {
 					$('.docs').css({left: page.base.L_R_pos + 10})
 					$('.editor').css({left: page.base.L_R_pos})
 					page.editor.resize()
-				} else if (e.which == 77) {
+				} else if (e.which == 190) {
 					e.preventDefault()
 					page.base.L_R_pos += 5
 					$('.menu').width(page.base.L_R_pos)
