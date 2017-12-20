@@ -16,6 +16,8 @@ class DocModel(models.Model):
 			('doc.rename', 'can rename doc'),
 			('menu.movenode', 'can move node'),
 			('menu.setpwd', 'can password doc'),
+			('doc.publish', 'can publish doc'),
+			('doc.unpublish', 'can unpublish doc'),
 		)
 
 	def __str__(self):

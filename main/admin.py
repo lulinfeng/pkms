@@ -16,6 +16,7 @@ class DocAdmin(admin.ModelAdmin):
 	list_display = (
 		'id',
 		'title',
+		'status',
 		'isdel',
 		'parent',
 		'doctype',

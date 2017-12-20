@@ -200,6 +200,9 @@ page.api = {
 			}).done(function (resp) {
 				if (resp.result == 'ok') {
 					$('#docs').html(resp.doc).css('bottom', 0)
+					if ($('.document').has('.topic').length) {
+						$('.document').css({'padding-right': 230})
+					}
 					$('#editor').hide()
 				} else {
 					alert(resp.msg)
@@ -662,6 +665,12 @@ page.event = {
 			}
 		})
 	}
+	,init: function () {
+		this.vimReadDoc()
+		this.menuOperation()
+		this.submenuOperation()
+		this.leftRightWidth()
+	}
 }
 
 var pwdpanel = function () {
@@ -804,9 +813,6 @@ $(function () {
 	})
 	page.base.menu_option.contextmenu = page.base.submenu_option
 	page.menu = $.jstree.create('#menu', page.base.menu_option)
-	page.event.vimReadDoc()
-	page.event.menuOperation()
-	page.event.submenuOperation()
-	page.event.leftRightWidth()
+	page.event.init()
 	page.pwdpanel = new pwdpanel()
 })

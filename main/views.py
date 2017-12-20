@@ -290,3 +290,21 @@ def upload_file(request):
         'result': 'ok',
         'path': os.path.join(settings.MEDIA_URL, day_path, filename)
     })
+
+
+def publish_doc(request):
+    if not request.user.has_perm('main.doc.publish'):
+        return JsonResponse({'result': 'failed', 'msg': 'permission die'})
+
+    pk = json.loads(request.body).get('id')
+    DocModel.objects.filter(pk=pk).update(status=1)
+    return JsonResponse({'result': 'ok'})
+
+
+def unpublish_doc(request):
+    if not request.user.has_perm('main.doc.unpublish'):
+        return JsonResponse({'result': 'failed', 'msg': 'permission die'})
+
+    pk = json.loads(request.body).get('id')
+    DocModel.objects.filter(pk=pk).update(status=0)
+    return JsonResponse({'result': 'ok'})
