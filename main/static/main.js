@@ -61,14 +61,6 @@
 					}
 				}
 				tmp['create'] = _tmp.create
-				tmp['publish'] = {
-					label: "Publish"
-					,action: function (data) {page.api.publish(data)}
-				}
-				tmp['unpublish'] = {
-					label: "Unpublish"
-					,action: function (data) {page.api.unpublish(data)}
-				}
 				tmp['edit'] = {
 					"label"				: "Edit",
 					"action"			: function (data) {
@@ -77,15 +69,28 @@
 						inst.trigger('edit', obj)
 					}
 				}
-				tmp['password'] = {
-					label: 'Password'
-					,action: function (data) {
-						// set or modify password.
-						page.pwdpanel.setpwd(data)
+				tmp['rename'] = _tmp.rename
+
+				tmp['operation'] = {
+					label: 'More...'
+					,submenu: {
+						publish: {
+							label: "Publish"
+							,action: function (data) {page.api.publish(data)}
+						}
+						,unpublish: {
+							label: "Unpublish"
+							,action: function (data) {page.api.unpublish(data)}
+						}
+						,password: {
+							label: 'SetPwd'
+							,action: function (data) {
+								page.pwdpanel.setpwd(data)
+							}
+						}
+						,delete: _tmp.remove
 					}
 				}
-				tmp['rename'] = _tmp.rename
-				tmp['delete'] = _tmp.remove
 				tmp['ccp'] = _tmp.ccp
 				return tmp
 			}
@@ -286,6 +291,7 @@ page.api = {
 			page.menu.get_node(obj, true).find('a').focus()
 			if (resp.result == 'ok') {
 				page.message('success')
+				page.menu.set_type(obj, obj.type | 4)
 			} else {
 				page.alert('', 'failed to set password')
 			}
@@ -300,7 +306,7 @@ page.api = {
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.menu.get_node(obj, true).find('a').focus()
-				// todo: change the node icon to published icon.
+				page.menu.set_type(obj, (obj.type | 8) ^ 8 )
 			} else {
 				page.message('error' + resp.msg || '')
 			}
@@ -315,7 +321,7 @@ page.api = {
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.menu.get_node(obj, true).find('a').focus()
-				// todo: change the node icon to unpublished icon.
+				page.menu.set_type(obj, obj.type | 8)
 			} else {
 				page.message('error' + resp.msg || '')
 			}
@@ -778,6 +784,7 @@ pwdpanel.prototype = {
 	,setpwd: function (data) {
 		var obj = page.menu.get_node(data.reference)
 		if ((obj.type | 4) == obj.type) {
+			page.menu.get_node(obj, true).find('a').focus()
 			return
 		} else {
 			this.createpwd(obj, data)
