@@ -23,6 +23,8 @@ urlpatterns = [
     url(r'^$', main_view.DocView.as_view()),
     url(r'^menu/$', main_view.MenuTree.as_view()),
     url(r'^upload/$', main_view.upload_file),
+    url(r'^publish/$', main_view.publish_doc),
+    url(r'^unpublish/$', main_view.unpublish_doc),
     url(r'^admin/', admin.site.urls),
 ]
 

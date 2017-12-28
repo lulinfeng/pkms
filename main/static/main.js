@@ -56,6 +56,14 @@
 					}
 				}
 				tmp['create'] = _tmp.create
+				tmp['publish'] = {
+					label: "Publish"
+					,action: function (data) {page.api.publish(data)}
+				}
+				tmp['unpublish'] = {
+					label: "Unpublish"
+					,action: function (data) {page.api.unpublish(data)}
+				}
 				tmp['edit'] = {
 					"label"				: "Edit",
 					"action"			: function (data) {
@@ -263,17 +271,47 @@ page.api = {
 			}
 		})
 	}
-	,setpwd: function (id, pwd) {
+	,setpwd: function (obj, pwd) {
 		$.ajax({
 			type: 'setpwd',
 			url: '/menu/',
-			data: JSON.stringify({id: id, pwd: pwd})
+			data: JSON.stringify({id: obj.data.id, pwd: pwd})
 		}).done(function (resp) {
-			page.menu.get_node(page.menu.get_selected(), true).find('a').focus()
+			page.menu.get_node(obj, true).find('a').focus()
 			if (resp.result == 'ok') {
 				page.message('success')
 			} else {
 				page.alert('', 'failed to set password')
+			}
+		})
+	}
+	,publish: function (data) {
+		var obj = page.menu.get_node(data.reference)
+		$.ajax({
+			type: 'post'
+			,url: '/publish/'
+			,data: JSON.stringify({id: obj.data.id})
+		}).done(function (resp) {
+			if (resp.result == 'ok') {
+				page.menu.get_node(obj, true).find('a').focus()
+				// todo: change the node icon to published icon.
+			} else {
+				page.message('error' + resp.msg || '')
+			}
+		})
+	}
+	,unpublish: function (data) {
+		var obj = page.menu.get_node(data.reference)
+		$.ajax({
+			type: 'post'
+			,url: '/unpublish/'
+			,data: JSON.stringify({id: obj.data.id})
+		}).done(function (resp) {
+			if (resp.result == 'ok') {
+				page.menu.get_node(obj, true).find('a').focus()
+				// todo: change the node icon to unpublished icon.
+			} else {
+				page.message('error' + resp.msg || '')
 			}
 		})
 	}
@@ -495,10 +533,9 @@ page.event = {
 		page.menu.element//.on('changed.jstree', page.api.getDoc)
 		.on('changed.jstree', function (e, data) {
 			if (data.action == 'select_node') {
-				if (data.node.type.startsWith('pwd') && data.instance.is_closed(data.instance.get_node(data.node, 1))) {
-					// var t = data.node.type.endsWith('file') ? 'getdoc' : 'get'
-					page.pwdpanel.show(e, function (pwd) {
-						if (data.node.type.endsWith('file')) {
+				if (data.node.type.startsWith('pwd')) {
+					if (data.node.type.endsWith('file')) {
+						page.pwdpanel.show(e, function (pwd) {
 							$.ajax({
 								url: '/menu/'
 								,type: 'getdoc'
@@ -513,7 +550,9 @@ page.event = {
 									$(e.target).focus()
 								}
 							})
-						} else {
+						})
+					} else if (data.instance.is_closed(data.instance.get_node(data.node, true))) {
+						page.pwdpanel.show(e, function (pwd) {
 							obj = page.menu.get_node(data.node);
 							obj.data.pwd = pwd
 							page.menu._load_node(obj, $.proxy(function (status) {
@@ -550,8 +589,8 @@ page.event = {
 								this.trigger('load_node', { "node" : obj, "status" : status });
 							}, page.menu));
 							$(e.target).focus()
-						}
-					})
+						})
+					}
 				} else {
 					page.api.getDoc(e, data)
 				}
@@ -731,29 +770,28 @@ pwdpanel.prototype = {
 	}
 	,setpwd: function (data) {
 		var obj = page.menu.get_node(data.reference)
-		// already pwd node to change password. else create new password
 		if (obj.type.startsWith('pwd')) {
-			this.changepwd(obj.id, data)
+			return
 		} else {
-			this.createpwd(obj.id, data)
+			this.createpwd(obj, data)
 		}
 	}
-	,createpwd(id, data) {
+	,createpwd(obj, data) {
 		this.el.show()
 		this.input.off('.enter').focus()
 		this.ctrl.off('.confirm')
 		var self = this
 		this.ctrl.on('click.confirm', 'button.pwd-confirm', function (e) {
-			page.api.setpwd(id, e.target.value)
+			page.api.setpwd(obj, e.target.value)
 			self.destory()
 		})
 		this.input.on('keydown.enter', function (e) {
 			if (e.which == 13) {
-				page.api.setpwd(id, e.target.value)
+				page.api.setpwd(obj, e.target.value)
 				self.destory()
 			} else if (e.which == 27) {
 				self.destory()
-				page.menu.get_node(page.menu.get_selected(), true).find('a').focus()
+				page.menu.get_node(obj, true).find('a').focus()
 			}
 		})
 	}
