@@ -25,9 +25,13 @@
 			'force_text' : true,
 			'types' : {
 				'file' : { 'valid_children' : [], 'icon' : 'jstree-file' },
-				'pwdfile' : { 'valid_children' : [], 'icon' : 'jstree-file' },
+				'unpub_file' : { 'valid_children' : [], 'icon' : 'jstree-unpubfile' },
+				'pwd_file' : { 'valid_children' : [], 'icon' : 'jstree-pwdfile' },
+				'pwd_unpub_file' : { 'valid_children' : [], 'icon' : 'jstree-unpub-pwdfile' },
 				'folder' : {'icon' : 'jstree-folder' },
-				'pwdfolder' : {'icon' : 'jstree-folder' },
+				'unpub_folder' : {'icon' : 'jstree-unpubfolder' },
+				'pwd_folder' : {'icon' : 'jstree-pwdfolder' },
+				'pwd_unpub_folder' : {'icon' : 'jstree-unpub-pwdfolder' },
 			},
 			'plugins' : ['state','dnd','types','contextmenu', 'themes']
 		}

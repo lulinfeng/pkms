@@ -98,7 +98,7 @@ class MenuTree(View):
         # on jstree ajax mode, the true children means that is a closed folder
         for i in r:
             i['data'] = {'id': i.pop('id')}
-            if i.get('type') in ('folder', 'pwdfolder'):
+            if i.get('type') in ('folder', 'pwd_folder'):
                 i.update({'children': True})
         return JsonResponse({'result': 'ok', 'd': r}, safe=False)
 
@@ -110,13 +110,13 @@ class MenuTree(View):
         source_type = data.get('source_type', '')
         _type = data['type']
         d = DocModel.objects.create(
-            parent=str([parent]), title=title, doctype=_type, source_type=source_type)
+            parent=str([parent]), title=title, doctype='unpub_%s' % _type, source_type=source_type)
         obj = SortedCatlogModel.objects.get(folder=parent)
         children = self._loads(obj.children)
         children.insert(int(pos), d.pk)
         obj.children = self._bytes(children)
         obj.save(update_fields=['children'])
-        if _type in ('folder', 'pwdfolder'):
+        if _type in ('folder', 'pwd_folder', 'unpub_folder'):
             SortedCatlogModel.objects.create(folder=d.pk, children=self._bytes([]))
         return JsonResponse({'result': 'ok', 'id': d.pk})
 
@@ -179,7 +179,7 @@ class MenuTree(View):
         s.children = self._bytes(ch)
         s.save(update_fields=['children'])
         # recursively delete sub node
-        if _type in ('folder', 'pwdfolder'):
+        if _type in ('folder', 'pwd_folder'):
             self._delete_folder(pk)
         return JsonResponse({'result': 'ok', 'msg': ''})
 
@@ -236,7 +236,7 @@ class MenuTree(View):
             d.save()
             return JsonResponse({'result': 'ok'})
         else:
-            d.doctype = 'pwd%s' % d.doctype
+            d.doctype = 'pwd_%s' % d.doctype
             d.pwd = pwd
             d.save()
             return JsonResponse({'result': 'ok'})
@@ -297,7 +297,10 @@ def publish_doc(request):
         return JsonResponse({'result': 'failed', 'msg': 'permission die'})
 
     pk = json.loads(request.body).get('id')
-    DocModel.objects.filter(pk=pk).update(status=1)
+    d = DocModel.objects.get(pk=pk)
+    d.doctype = d.doctype.replace('unpub_', '')
+    d.status = 1
+    d.save(update_fields=['status', 'doctype'])
     return JsonResponse({'result': 'ok'})
 
 
@@ -306,5 +309,16 @@ def unpublish_doc(request):
         return JsonResponse({'result': 'failed', 'msg': 'permission die'})
 
     pk = json.loads(request.body).get('id')
-    DocModel.objects.filter(pk=pk).update(status=0)
+    d = DocModel.objects.get(pk=pk)
+    _type = d.doctype.split('_')
+    if d.status == 0 and 'unpub' in _type:
+        return JsonResponse({'result': 'ok'})
+    d.status = 0
+    if 'unpub' not in _type:
+        if 'pwd' in _type:
+            _type.insert(1, 'unpub')
+        else:
+            _type.insert(0, 'unpub')
+    d.doctype = '_'.join(_type)
+    d.save(update_fields=['status', 'doctype'])
     return JsonResponse({'result': 'ok'})

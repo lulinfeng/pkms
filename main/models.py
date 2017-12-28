@@ -31,17 +31,17 @@ class DocModel(models.Model):
 	status = models.SmallIntegerField(default=0)
 	# TODO: 改成列表，支持标签引用
 	parent = models.TextField(default='[]')
-	# file|pwdfile|folder|pwdfolder
-	doctype = models.CharField(max_length=10, default='file')
+	# file|pwd_file|unpub_file|pwd_unpub_file; folder|pwd_folder...
+	doctype = models.CharField(max_length=20, default='unpub_file')
 	# source_type: ''|'rst'|'md'
-	source_type = models.CharField(max_length=20, default='')
-	tag = models.CharField(max_length=20, default='')
+	source_type = models.CharField(max_length=20, default='', blank=True)
+	tag = models.CharField(max_length=20, default='', blank=True)
 	# node password
-	pwd = models.CharField(max_length=20, default='')
+	pwd = models.CharField(max_length=20, default='', blank=True)
 	newtime = models.DateTimeField(auto_now_add=True)
 	changetime = models.DateTimeField(auto_now=True)
 	title = models.CharField(max_length=50)
-	content = models.TextField(default='')
+	content = models.TextField(default='', blank=True)
 
 
 class SortedCatlogModel(models.Model):

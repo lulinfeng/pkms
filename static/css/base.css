@@ -140,3 +140,29 @@ button.close{
     background: #676767;
     color: #b9b9b9;
 }
+.jstree .jstree-icon.jstree-pwdfile {
+	background: url(/static/modules/jstree/themes/default-dark/32px.png) -100px -68px no-repeat,
+	url(/static/images/pwd.png) -6px -6px no-repeat;
+}
+.jstree .jstree-icon.jstree-pwdfolder {
+	background: url(/static/modules/jstree/themes/default-dark/32px.png) -260px -4px no-repeat,
+	url(/static/images/pwd.png) -8px -6px no-repeat;
+}
+.jstree .jstree-icon.jstree-unpubfile {
+	background: url(/static/modules/jstree/themes/default-dark/32px.png) -100px -68px no-repeat,
+	url(/static/images/publish2.svg) right top no-repeat;
+}
+.jstree .jstree-icon.jstree-unpubfolder {
+	background: url(/static/modules/jstree/themes/default-dark/32px.png) -260px -4px no-repeat,
+	url(/static/images/publish2.svg) right top no-repeat;
+}
+.jstree .jstree-icon.jstree-unpub-pwdfile {
+	background: url(/static/modules/jstree/themes/default-dark/32px.png) -100px -68px no-repeat,
+	url(/static/images/pwd.png) -7px -6px no-repeat,
+	url(/static/images/publish2.svg) right top no-repeat;
+}
+.jstree .jstree-icon.jstree-unpub-pwdfolder {
+	background: url(/static/modules/jstree/themes/default-dark/32px.png) -260px -4px no-repeat,
+	url(/static/images/pwd.png) -7px -6px no-repeat,
+	url(/static/images/publish2.svg) right top no-repeat;
+}
