@@ -26,13 +26,20 @@ class DocModel(models.Model):
 	def __unicode__(self):
 		return self.title
 
+	# STATUS = {
+	# 	'file': 1,
+	# 	'folder': 1 << 1,
+	# 	'pwd': 1 << 2,
+	# 	'unpublish': 1 << 3,
+	# }
+
 	isdel = models.BooleanField(default=False)
 	# 1 published
 	status = models.SmallIntegerField(default=0)
 	# TODO: 改成列表，支持标签引用
 	parent = models.TextField(default='[]')
-	# file|pwd_file|unpub_file|pwd_unpub_file; folder|pwd_folder...
-	doctype = models.CharField(max_length=20, default='unpub_file')
+	# file 1, folder 2, pwd 4, unpublish 8
+	doctype = models.IntegerField(default=1)
 	# source_type: ''|'rst'|'md'
 	source_type = models.CharField(max_length=20, default='', blank=True)
 	tag = models.CharField(max_length=20, default='', blank=True)

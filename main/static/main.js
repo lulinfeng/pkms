@@ -24,14 +24,15 @@
 			},
 			'force_text' : true,
 			'types' : {
-				'file' : { 'valid_children' : [], 'icon' : 'jstree-file' },
-				'unpub_file' : { 'valid_children' : [], 'icon' : 'jstree-unpubfile' },
-				'pwd_file' : { 'valid_children' : [], 'icon' : 'jstree-pwdfile' },
-				'pwd_unpub_file' : { 'valid_children' : [], 'icon' : 'jstree-unpub-pwdfile' },
-				'folder' : {'icon' : 'jstree-folder' },
-				'unpub_folder' : {'icon' : 'jstree-unpubfolder' },
-				'pwd_folder' : {'icon' : 'jstree-pwdfolder' },
-				'pwd_unpub_folder' : {'icon' : 'jstree-unpub-pwdfolder' },
+				// file 1, folder 2, pwd 4, unpub 8
+				1 : { 'valid_children' : [], 'icon' : 'jstree-file' },
+				9 : { 'valid_children' : [], 'icon' : 'jstree-unpubfile' },
+				5 : { 'valid_children' : [], 'icon' : 'jstree-pwdfile' },
+				13 : { 'valid_children' : [], 'icon' : 'jstree-unpub-pwdfile' },
+				2 : {'icon' : 'jstree-folder' },
+				10 : {'icon' : 'jstree-unpubfolder' },
+				6 : {'icon' : 'jstree-pwdfolder' },
+				14 : {'icon' : 'jstree-unpub-pwdfolder' },
 			},
 			'plugins' : ['state','dnd','types','contextmenu', 'themes']
 		}
@@ -48,15 +49,15 @@
 					"create_folder" : {
 						"separator_after": true,
 						"label": "Folder",
-						"action": function (data) {page.op.addMenu(data, 'folder', '')}
+						"action": function (data) {page.op.addMenu(data, 2, '')}
 					},
 					"create_rstfile" : {
 						"label": "rstDoc",
-						"action": function (data) {page.op.addMenu(data, 'file', 'rst')}
+						"action": function (data) {page.op.addMenu(data, 1, 'rst')}
 					},
 					"create_mdfile" : {
 						"label": "mdDoc",
-						"action": function (data) {page.op.addMenu(data, 'file', 'md')}
+						"action": function (data) {page.op.addMenu(data, 1, 'md')}
 					}
 				}
 				tmp['create'] = _tmp.create
@@ -108,7 +109,8 @@ page.api = {
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				data.node.data.id = resp.id
-				if (data.node.type == 'file') {
+				// file 1
+				if ((data.node.type | 1) == data.node.type) {
 					$('#docs').css({bottom: page.base.docs_bottom + '%'}).empty()
 					data.instance.deselect_all()
 					data.instance.select_node(data.node, true)
@@ -204,7 +206,7 @@ page.api = {
 		})
 	}
 	,getDoc: function (e, data) {
-		if (data && data.selected && data.selected.length && data.node.type == 'file') {
+		if (data && data.selected && data.selected.length && ((data.node.type | 1) == data.node.type)) {
 			$.ajax({
 				type: 'getdoc',
 				url: '/menu/',
@@ -325,7 +327,7 @@ page.op = {
 	addMenu: function (data, type, source) {
 		var inst = $.jstree.reference(data.reference),
 			obj = inst.get_node(data.reference),
-			_t = obj.type == 'file' ? 'after' : 'first',
+			_t = (obj.type | 1) == obj.type ? 'after' : 'first',
 			o = {'type': type, 'data': {create: true, 'source_type': source}}
 		inst.create_node(obj, o, _t, function (node) {inst.edit(node)})
 	}
@@ -537,8 +539,9 @@ page.event = {
 		page.menu.element//.on('changed.jstree', page.api.getDoc)
 		.on('changed.jstree', function (e, data) {
 			if (data.action == 'select_node') {
-				if (data.node.type.startsWith('pwd')) {
-					if (data.node.type.endsWith('file')) {
+				// pwd 4
+				if ((data.node.type | 4) == data.node.type) {
+					if ((data.node.type | 1) == data.node.type) {
 						page.pwdpanel.show(e, function (pwd) {
 							$.ajax({
 								url: '/menu/'
@@ -629,7 +632,7 @@ page.event = {
 			e.preventDefault();
 			if(this.is_closed(e.currentTarget)) {
 				var node = this.get_node(e.currentTarget)
-				if (node.type.startsWith('pwd')) {
+				if ((node.type | 4) == node.type) {
 					page.pwdpanel.show(e, function (pwd) {
 						node.data ? node.data.pwd=pwd : node.data={pwd: pwd}
 						this.open_node(e.currentTarget, function (o) { this.get_node(o, true).children('.jstree-anchor').focus(); });
@@ -774,7 +777,7 @@ pwdpanel.prototype = {
 	}
 	,setpwd: function (data) {
 		var obj = page.menu.get_node(data.reference)
-		if (obj.type.startsWith('pwd')) {
+		if ((obj.type | 4) == obj.type) {
 			return
 		} else {
 			this.createpwd(obj, data)

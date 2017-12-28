@@ -75,7 +75,7 @@ class MenuTree(View):
             )
         elif pk not in (0, '0'):
             d = DocModel.objects.get(pk=pk)
-            if d.doctype.startswith('pwd') and d.pwd != request.GET.get('pwd'):
+            if d.doctype | 4 == d.doctype and d.pwd != request.GET.get('pwd'):
                 return JsonResponse({'result': 'failed', 'd': []}, safe=False)
         # 按照目录子集合结构排序
         _children_list = SortedCatlogModel.objects.values_list('children', flat=True).get(folder=pk)
@@ -98,7 +98,7 @@ class MenuTree(View):
         # on jstree ajax mode, the true children means that is a closed folder
         for i in r:
             i['data'] = {'id': i.pop('id')}
-            if i.get('type') in ('folder', 'pwd_folder'):
+            if i['type'] | 2 == i['type']:
                 i.update({'children': True})
         return JsonResponse({'result': 'ok', 'd': r}, safe=False)
 
@@ -110,7 +110,7 @@ class MenuTree(View):
         source_type = data.get('source_type', '')
         _type = data['type']
         d = DocModel.objects.create(
-            parent=str([parent]), title=title, doctype='unpub_%s' % _type, source_type=source_type)
+            parent=str([parent]), title=title, doctype=8 | _type, source_type=source_type)
         obj = SortedCatlogModel.objects.get(folder=parent)
         children = self._loads(obj.children)
         children.insert(int(pos), d.pk)
@@ -126,7 +126,7 @@ class MenuTree(View):
         source = data.get('source')  # 获取源文件用于编辑
         d, source_type, doctype, pwd = DocModel.objects.values_list(
             'content', 'source_type', 'doctype', 'pwd').get(pk=pk)
-        if doctype.startswith('pwd') and pwd != data.get('pwd', ''):
+        if (doctype | 4 == doctype) and pwd != data.get('pwd', ''):
             return JsonResponse({'result': 'fail', 'msg': 'permission die'})
         if source_type.endswith('rst'):
             html = rst(d)
@@ -167,11 +167,16 @@ class MenuTree(View):
         doc = DocModel.objects.get(pk=pk)
         # parent keep the last one and set boolean isdel
         parents = json.loads(doc.parent)
-        if (parents) == 1:
+        if parent not in parents:
+            return JsonResponse({'result': 'failed', 'msg': 'parent invalid'})
+
+        parents.remove(parent)
+        if not parents:
             doc.isdel = True
+            doc.parent = str([0])
         else:
-            parents.remove(parent)
-        doc.save()
+            doc.parent = str(parents)
+        doc.save(update_fields=['isdel', 'parent'])
         # delete form catlog
         s = SortedCatlogModel.objects.get(folder=parent)
         ch = self._loads(s.children)
@@ -179,8 +184,8 @@ class MenuTree(View):
         s.children = self._bytes(ch)
         s.save(update_fields=['children'])
         # recursively delete sub node
-        if _type in ('folder', 'pwd_folder'):
-            self._delete_folder(pk)
+        # if _type | 2 == _type:
+        #     self._delete_folder(pk)
         return JsonResponse({'result': 'ok', 'msg': ''})
 
     def rename(self, request, *args, **kwargs):
@@ -228,7 +233,7 @@ class MenuTree(View):
         pk = o.get('id')
         pwd = o.get('pwd') or ''
         d = DocModel.objects.get(pk=pk)
-        if d.doctype.startswith('pwd'):
+        if d.doctype | 4 == d.doctype:
             # change password
             if d.pwd != o.get('oldpwd'):
                 return JsonResponse({'result': 'failed', 'msg': 'invalid password'})
@@ -236,9 +241,9 @@ class MenuTree(View):
             d.save()
             return JsonResponse({'result': 'ok'})
         else:
-            d.doctype = 'pwd_%s' % d.doctype
+            d.doctype |= 4
             d.pwd = pwd
-            d.save()
+            d.save(update_fields=['doctype', 'pwd'])
             return JsonResponse({'result': 'ok'})
 
     def copynode(self, request, *args, **kwargs):
@@ -298,7 +303,7 @@ def publish_doc(request):
 
     pk = json.loads(request.body).get('id')
     d = DocModel.objects.get(pk=pk)
-    d.doctype = d.doctype.replace('unpub_', '')
+    d.doctype = (d.doctype | 8) ^ 8
     d.status = 1
     d.save(update_fields=['status', 'doctype'])
     return JsonResponse({'result': 'ok'})
@@ -310,15 +315,7 @@ def unpublish_doc(request):
 
     pk = json.loads(request.body).get('id')
     d = DocModel.objects.get(pk=pk)
-    _type = d.doctype.split('_')
-    if d.status == 0 and 'unpub' in _type:
-        return JsonResponse({'result': 'ok'})
     d.status = 0
-    if 'unpub' not in _type:
-        if 'pwd' in _type:
-            _type.insert(1, 'unpub')
-        else:
-            _type.insert(0, 'unpub')
-    d.doctype = '_'.join(_type)
+    d.doctype |= 8
     d.save(update_fields=['status', 'doctype'])
     return JsonResponse({'result': 'ok'})
