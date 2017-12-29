@@ -116,7 +116,7 @@ class MenuTree(View):
         children.insert(int(pos), d.pk)
         obj.children = self._bytes(children)
         obj.save(update_fields=['children'])
-        if _type in ('folder', 'pwd_folder', 'unpub_folder'):
+        if _type | 2 == _type:
             SortedCatlogModel.objects.create(folder=d.pk, children=self._bytes([]))
         return JsonResponse({'result': 'ok', 'id': d.pk})
 
