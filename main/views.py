@@ -5,6 +5,7 @@ import time
 import six
 import json
 from functools import wraps
+from hashlib import md5
 
 from django.utils.decorators import available_attrs, method_decorator
 # from django.contrib.auth.decorators import permission_required
@@ -84,11 +85,11 @@ class MenuTree(View):
         if request.user.is_authenticated:
             # all doc
             r = DocModel.objects.filter(pk__in=children_list, isdel=False).values(
-                'id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
+                'id', 'staticpage').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
         else:
             # published doc
             r = DocModel.objects.filter(pk__in=children_list, isdel=False, status=1).values(
-                'id').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
+                'id', 'staticpage').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
         # r = [{"id":1,"text":"Root node","children":[
         #     {"id":2,"text":"Child node 1","children":True},
         #     {"id":3,"text":"Child node 2"}
@@ -100,6 +101,8 @@ class MenuTree(View):
             i['data'] = {'id': i.pop('id')}
             if i['type'] | 2 == i['type']:
                 i.update({'children': True})
+            else:
+                i['a_attr'] = {'href': i.pop('staticpage')}
         return JsonResponse({'result': 'ok', 'd': r}, safe=False)
 
     def create(self, request, *args, **kwargs):
@@ -124,27 +127,25 @@ class MenuTree(View):
         data = json.loads(request.body)
         pk = data['id']
         source = data.get('source')  # 获取源文件用于编辑
-        d, source_type, doctype, pwd = DocModel.objects.values_list(
-            'content', 'source_type', 'doctype', 'pwd').get(pk=pk)
-        if (doctype | 4 == doctype) and pwd != data.get('pwd', ''):
+        d = DocModel.objects.get(pk=pk)
+        if (d.doctype | 4 == d.doctype) and d.pwd != data.get('pwd', ''):
             return JsonResponse({'result': 'fail', 'msg': 'permission die'})
-        if source_type.endswith('rst'):
-            html = rst(d)
-        else:
-            html = markdown(d)
+        html = static_doc(d)
         if source is True:
-            return JsonResponse({'result': 'ok', 'doc': html, 'source': d})
+            return JsonResponse({'result': 'ok', 'doc': html, 'source': d.content})
         else:
             return JsonResponse({'result': 'ok', 'doc': html})
 
     def put(self, request, *args, **kwargs):
         # save doc
-        # TODO: permisstion
         data = json.loads(request.body)
         pk = data['id']
-        DocModel.objects.filter(pk=pk).update(content=data['content'])
+        d = DocModel.objects.get(pk=pk)
+        d.content = data['content']
+        d.save(update_fields=['content'])
+        html = static_doc(d)
 
-        return JsonResponse({'result': 'ok', 'msg': '', 'doc': rst(data['content'])})
+        return JsonResponse({'result': 'ok', 'msg': '', 'doc': html})
 
     def _delete_folder(self, folder_id):
         f = SortedCatlogModel.objects.filter(folder=folder_id)
@@ -244,6 +245,7 @@ class MenuTree(View):
             d.doctype |= 4
             d.pwd = pwd
             d.save(update_fields=['doctype', 'pwd'])
+            unstatic_doc(d)
             return JsonResponse({'result': 'ok'})
 
     def copynode(self, request, *args, **kwargs):
@@ -306,7 +308,8 @@ def publish_doc(request):
     d.doctype = (d.doctype | 8) ^ 8
     d.status = 1
     d.save(update_fields=['status', 'doctype'])
-    return JsonResponse({'result': 'ok'})
+    static_doc(d)
+    return JsonResponse({'result': 'ok', 'data': '/staticpage/%s' % md5(str(d.pk)).hexdigest()[8:-8]})
 
 
 def unpublish_doc(request):
@@ -318,4 +321,32 @@ def unpublish_doc(request):
     d.status = 0
     d.doctype |= 8
     d.save(update_fields=['status', 'doctype'])
+    unstatic_doc(d)
     return JsonResponse({'result': 'ok'})
+
+
+def static_doc(d):
+    if d.source_type == 'rst':
+        content = rst(d.content)
+    else:
+        content = markdown(d.content)
+    unpublish = d.doctype | 8 == d.doctype or d.doctype | 4 == d.doctype
+    if not unpublish:
+        filename = md5(str(d.pk)).hexdigest()[8:-8]
+        path = os.path.join(settings.STATIC_PAGE, filename)
+        with open(path, 'w') as f:
+            f.write(content.encode('utf8'))
+        d.staticpage = '/staticpage/%s' % filename
+        d.save(update_fields=['staticpage'])
+    return content
+
+
+def unstatic_doc(d):
+    filename = md5(str(d.pk)).hexdigest()[8:-8]
+    path = os.path.join(settings.STATIC_PAGE, filename)
+    try:
+        os.remove(path)
+    except:
+        pass
+    d.staticpage = '#'
+    d.save(update_fields=['staticpage'])

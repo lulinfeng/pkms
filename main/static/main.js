@@ -212,23 +212,40 @@ page.api = {
 	}
 	,getDoc: function (e, data) {
 		if (data && data.selected && data.selected.length && ((data.node.type | 1) == data.node.type)) {
-			$.ajax({
-				type: 'getdoc',
-				url: '/menu/',
-				data: JSON.stringify(data.node.data)
-			}).done(function (resp) {
-				if (resp.result == 'ok') {
-					$('#docs').html(resp.doc).css('bottom', 0)
+			if (data.node.a_attr.href == '#') {
+				// general get doc
+				$.ajax({
+					type: 'getdoc',
+					url: '/menu/',
+					data: JSON.stringify(data.node.data)
+				}).done(function (resp) {
+					if (resp.result == 'ok') {
+						$('#docs').html(resp.doc).css('bottom', 0)
+						if ($('.document').has('.topic').length) {
+							$('.document').css({'padding-right': 230})
+						}
+						$('#editor').hide()
+					} else {
+						alert(resp.msg)
+					}
+				})
+			} else {
+				// get the static resource
+				$.ajax({
+					type: 'get',
+					url: data.node.a_attr.href,
+					data: JSON.stringify(data.node.data)
+				}).done(function (resp) {
+					$('#docs').html(resp).css('bottom', 0)
 					if ($('.document').has('.topic').length) {
 						$('.document').css({'padding-right': 230})
 					}
 					$('#editor').hide()
-				} else {
-					alert(resp.msg)
-				}
-			}).fail(function (msg) {
-				alert(msg)
-			})
+				}).fail(function (e) {
+					$('#docs').html(e.responseText).css('bottom', 0)
+					$('#editor').hide()
+				})
+			}
 		}
 	}
 	,editDoc: function (e, obj) {
@@ -305,6 +322,7 @@ page.api = {
 			,data: JSON.stringify({id: obj.data.id})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
+				obj.a_attr.href = resp.data
 				page.menu.get_node(obj, true).find('a').focus()
 				page.menu.set_type(obj, (obj.type | 8) ^ 8 )
 			} else {
@@ -796,7 +814,7 @@ pwdpanel.prototype = {
 		this.ctrl.off('.confirm')
 		var self = this
 		this.ctrl.on('click.confirm', 'button.pwd-confirm', function (e) {
-			page.api.setpwd(obj, e.target.value)
+			page.api.setpwd(obj, self.input.val())
 			self.destory()
 		})
 		this.input.on('keydown.enter', function (e) {

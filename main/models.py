@@ -47,6 +47,7 @@ class DocModel(models.Model):
 	pwd = models.CharField(max_length=20, default='', blank=True)
 	newtime = models.DateTimeField(auto_now_add=True)
 	changetime = models.DateTimeField(auto_now=True)
+	staticpage = models.CharField(max_length=50, default='#')
 	title = models.CharField(max_length=50)
 	content = models.TextField(default='', blank=True)
 
