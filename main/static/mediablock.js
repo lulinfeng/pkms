@@ -6,13 +6,12 @@ var event = require("../lib/event");
 var Editor = require("../editor").Editor;
 var cssText = "\
 .ace_lineWidgetContainer .action{\
-  width: 150px;\
+  position: absolute;\
+  top: 0;\
   display: none;\
-  text-align: center;\
 }\
 .ace_lineWidgetContainer .action button{\
   height: 18px;\
-  margin: auto 4px;\
   width: 62px;\
 }\
 ";
