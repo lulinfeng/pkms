@@ -49,15 +49,15 @@
 					"create_folder" : {
 						"separator_after": true,
 						"label": "Folder",
-						"action": function (data) {page.op.addMenu(data, 2, '')}
+						"action": function (data) {page.op.addMenu(data, 10, '')}
 					},
 					"create_rstfile" : {
 						"label": "rstDoc",
-						"action": function (data) {page.op.addMenu(data, 1, 'rst')}
+						"action": function (data) {page.op.addMenu(data, 9, 'rst')}
 					},
 					"create_mdfile" : {
 						"label": "mdDoc",
-						"action": function (data) {page.op.addMenu(data, 1, 'md')}
+						"action": function (data) {page.op.addMenu(data, 9, 'md')}
 					}
 				}
 				tmp['create'] = _tmp.create
