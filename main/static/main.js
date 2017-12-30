@@ -324,9 +324,9 @@ page.api = {
 			,data: JSON.stringify({id: obj.data.id})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
-				obj.a_attr.href = resp.data
+				// obj.a_attr.href = resp.data
 				page.menu.get_node(obj, true).find('a').focus()
-				page.menu.set_type_all(obj, (obj.type | 8) ^ 8 )
+				page.menu.set_type_all(obj, (obj.type | 8) ^ 8, resp.data)
 			} else {
 				page.message('error' + resp.msg || '')
 			}
@@ -341,7 +341,7 @@ page.api = {
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.menu.get_node(obj, true).find('a').focus()
-				page.menu.set_type_all(obj, obj.type | 8)
+				page.menu.set_type_all(obj, obj.type | 8, '#')
 			} else {
 				page.message('error' + resp.msg || '')
 			}
@@ -885,7 +885,7 @@ $(function () {
 	})
 	page.base.menu_option.contextmenu = page.base.submenu_option
 	page.menu = $.jstree.create('#menu', page.base.menu_option)
-	page.menu.set_type_all = function (obj, type) {
+	page.menu.set_type_all = function (obj, type, a_attr) {
 		var id = obj.data.id
 		var data = Object.values(page.menu._model.data)
 		var i = 0
@@ -895,6 +895,7 @@ $(function () {
 			}
 			if (id == data[i].data.id) {
 				page.menu.set_type(data[i], type)
+				a_attr ? data[i].a_attr.href = a_attr : ''
 			}
 		}
 	}
