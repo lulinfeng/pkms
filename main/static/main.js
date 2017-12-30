@@ -187,7 +187,9 @@ page.api = {
 				old_pos: data.old_position
 			})
 		}).done(function (resp) {
-			if (resp.result != 'ok') {
+			if (resp.result == 'ok') {
+				data.node.data = $.extend(true, {}, data.original.data)
+			} else {
 				alert(resp.msg)
 				data.instance.refresh()
 			}
@@ -308,7 +310,7 @@ page.api = {
 			page.menu.get_node(obj, true).find('a').focus()
 			if (resp.result == 'ok') {
 				page.message('success')
-				page.menu.set_type(obj, obj.type | 4)
+				page.menu.set_type_all(obj, obj.type | 4)
 			} else {
 				page.alert('', 'failed to set password')
 			}
@@ -324,7 +326,7 @@ page.api = {
 			if (resp.result == 'ok') {
 				obj.a_attr.href = resp.data
 				page.menu.get_node(obj, true).find('a').focus()
-				page.menu.set_type(obj, (obj.type | 8) ^ 8 )
+				page.menu.set_type_all(obj, (obj.type | 8) ^ 8 )
 			} else {
 				page.message('error' + resp.msg || '')
 			}
@@ -339,7 +341,7 @@ page.api = {
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.menu.get_node(obj, true).find('a').focus()
-				page.menu.set_type(obj, obj.type | 8)
+				page.menu.set_type_all(obj, obj.type | 8)
 			} else {
 				page.message('error' + resp.msg || '')
 			}
@@ -883,6 +885,19 @@ $(function () {
 	})
 	page.base.menu_option.contextmenu = page.base.submenu_option
 	page.menu = $.jstree.create('#menu', page.base.menu_option)
+	page.menu.set_type_all = function (obj, type) {
+		var id = obj.data.id
+		var data = Object.values(page.menu._model.data)
+		var i = 0
+		for (; i < data.length; i++) {
+			if (data[i].id == '#') {
+				continue
+			}
+			if (id == data[i].data.id) {
+				page.menu.set_type(data[i], type)
+			}
+		}
+	}
 	page.event.init()
 	page.pwdpanel = new pwdpanel()
 })
