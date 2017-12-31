@@ -283,7 +283,7 @@ page.api = {
 				data: JSON.stringify({id: data.node.data.id, type: data.node.type, parent: parent})
 			}).done(function (resp) {
 				if (resp.result == 'ok') {
-					data.instance.get_node(prev_dom, true).find('a').focus()
+					data.instance.get_node(prev_dom, true).find('a').first().focus()
 				} else {
 					alert(resp.msg)
 					data.instance.refresh()
@@ -307,7 +307,7 @@ page.api = {
 			url: '/menu/',
 			data: JSON.stringify({id: obj.data.id, pwd: pwd})
 		}).done(function (resp) {
-			page.menu.get_node(obj, true).find('a').focus()
+			page.menu.get_node(obj, true).find('a').first().focus()
 			if (resp.result == 'ok') {
 				page.message('success')
 				page.menu.set_type_all(obj, obj.type | 4)
@@ -325,7 +325,7 @@ page.api = {
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				// obj.a_attr.href = resp.data
-				page.menu.get_node(obj, true).find('a').focus()
+				page.menu.get_node(obj, true).find('a').first().focus()
 				page.menu.set_type_all(obj, (obj.type | 8) ^ 8, resp.data)
 			} else {
 				page.message('error' + resp.msg || '')
@@ -340,7 +340,7 @@ page.api = {
 			,data: JSON.stringify({id: obj.data.id})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
-				page.menu.get_node(obj, true).find('a').focus()
+				page.menu.get_node(obj, true).find('a').first().focus()
 				page.menu.set_type_all(obj, obj.type | 8, '#')
 			} else {
 				page.message('error' + resp.msg || '')
@@ -436,7 +436,7 @@ page.op = {
 				break
 			case 27:
 				$.vakata.context.hide()
-				page.menu.get_node(page.menu.get_selected(), 1).find('a').focus()
+				page.menu.get_node(page.menu.get_selected(), 1).find('a').first().focus()
 				e.preventDefault()
 				break
 			default:
@@ -774,7 +774,7 @@ pwdpanel.prototype = {
 		})
 		this.ctrl.on('click.cancle', 'button.pwd-cancle', function (e) {
 			self.destory()
-			page.menu.get_node(page.menu.get_selected(), true).find('a').focus()
+			page.menu.get_node(page.menu.get_selected(), true).find('a').first().focus()
 		})
 	}
 	,destory: function () {
@@ -797,14 +797,14 @@ pwdpanel.prototype = {
 				self.destory()
 			} else if (e.which == 27) {
 				self.destory()
-				page.menu.get_node(page.menu.get_selected(), true).find('a').focus()
+				page.menu.get_node(page.menu.get_selected(), true).find('a').first().focus()
 			}
 		})
 	}
 	,setpwd: function (data) {
 		var obj = page.menu.get_node(data.reference)
 		if ((obj.type | 4) == obj.type) {
-			page.menu.get_node(obj, true).find('a').focus()
+			page.menu.get_node(obj, true).find('a').first().focus()
 			return
 		} else {
 			this.createpwd(obj, data)
@@ -825,7 +825,7 @@ pwdpanel.prototype = {
 				self.destory()
 			} else if (e.which == 27) {
 				self.destory()
-				page.menu.get_node(obj, true).find('a').focus()
+				page.menu.get_node(obj, true).find('a').first().focus()
 			}
 		})
 	}
@@ -890,12 +890,15 @@ $(function () {
 		var data = Object.values(page.menu._model.data)
 		var i = 0
 		for (; i < data.length; i++) {
-			if (data[i].id == '#') {
+			if (data[i].id == $.jstree.root) {
 				continue
 			}
 			if (id == data[i].data.id) {
 				page.menu.set_type(data[i], type)
-				a_attr ? data[i].a_attr.href = a_attr : ''
+				if (a_attr) {
+					data[i].a_attr.href = a_attr
+					page.menu.get_node(data[i], true).find('a').first().attr('href', a_attr)
+				}
 			}
 		}
 	}

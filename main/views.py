@@ -99,10 +99,9 @@ class MenuTree(View):
         # on jstree ajax mode, the true children means that is a closed folder
         for i in r:
             i['data'] = {'id': i.pop('id')}
+            i['a_attr'] = {'href': i.pop('staticpage')}
             if i['type'] | 2 == i['type']:
                 i.update({'children': True})
-            else:
-                i['a_attr'] = {'href': i.pop('staticpage')}
         return JsonResponse({'result': 'ok', 'd': r}, safe=False)
 
     def create(self, request, *args, **kwargs):
@@ -325,11 +324,18 @@ def unpublish_doc(request):
     return JsonResponse({'result': 'ok'})
 
 
+def static_catlog(d):
+    return ''
+
+
 def static_doc(d):
-    if d.source_type == 'rst':
-        content = rst(d.content)
+    if d.doctype | 2 == d.doctype:
+        content = static_catlog(d)
     else:
-        content = markdown(d.content)
+        if d.source_type == 'rst':
+            content = rst(d.content)
+        else:
+            content = markdown(d.content)
     unpublish = d.doctype | 8 == d.doctype or d.doctype | 4 == d.doctype
     if not unpublish:
         filename = md5(str(d.pk)).hexdigest()[8:-8]
