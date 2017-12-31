@@ -6,6 +6,7 @@ import six
 import json
 from functools import wraps
 from hashlib import md5
+import codecs
 
 from django.utils.decorators import available_attrs, method_decorator
 # from django.contrib.auth.decorators import permission_required
@@ -308,7 +309,7 @@ def publish_doc(request):
     d.status = 1
     d.save(update_fields=['status', 'doctype'])
     static_doc(d)
-    return JsonResponse({'result': 'ok', 'data': '/staticpage/%s' % md5(str(d.pk)).hexdigest()[8:-8]})
+    return JsonResponse({'result': 'ok', 'data': '/staticpage/%s' % md5(str(d.pk).encode('utf8')).hexdigest()[8:-8]})
 
 
 def unpublish_doc(request):
@@ -338,17 +339,17 @@ def static_doc(d):
             content = markdown(d.content)
     unpublish = d.doctype | 8 == d.doctype or d.doctype | 4 == d.doctype
     if not unpublish:
-        filename = md5(str(d.pk)).hexdigest()[8:-8]
+        filename = md5(str(d.pk).encode('utf8')).hexdigest()[8:-8]
         path = os.path.join(settings.STATIC_PAGE, filename)
-        with open(path, 'w') as f:
-            f.write(content.encode('utf8'))
+        with codecs.open(path, 'w', encoding='utf8') as f:
+            f.write(content)
         d.staticpage = '/staticpage/%s' % filename
         d.save(update_fields=['staticpage'])
     return content
 
 
 def unstatic_doc(d):
-    filename = md5(str(d.pk)).hexdigest()[8:-8]
+    filename = md5(str(d.pk).encode('utf8')).hexdigest()[8:-8]
     path = os.path.join(settings.STATIC_PAGE, filename)
     try:
         os.remove(path)

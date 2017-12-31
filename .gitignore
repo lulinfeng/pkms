@@ -1,4 +1,6 @@
 static/admin/
+public_static/
+media/
 *.sqlite3
 *.pyc
 */migrations/*.py

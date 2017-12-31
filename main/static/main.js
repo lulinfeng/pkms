@@ -224,7 +224,8 @@ page.api = {
 					if (resp.result == 'ok') {
 						$('#docs').html(resp.doc).css('bottom', 0)
 						if ($('.document').has('.topic').length) {
-							$('.document').css({'padding-right': 230})
+							var w = $('.topic')[0].clientWidth
+							$('.document').css({'padding-right': w})
 						}
 						$('#editor').hide()
 					} else {
@@ -240,7 +241,8 @@ page.api = {
 				}).done(function (resp) {
 					$('#docs').html(resp).css('bottom', 0)
 					if ($('.document').has('.topic').length) {
-						$('.document').css({'padding-right': 230})
+						var w = $('.topic')[0].clientWidth
+						$('.document').css({'padding-right': w})
 					}
 					$('#editor').hide()
 				}).fail(function (e) {
