@@ -104,4 +104,4 @@ def restructuredtext(value):
         # for i in parts.keys()[:len(parts.keys()) - 1]:
         #     print i, parts[i]
         # print parts.keys()
-        return mark_safe(force_unicode('%s%s' % (parts['stylesheet'], parts['html_body'])))
+        return mark_safe(force_unicode(parts['html_body']))

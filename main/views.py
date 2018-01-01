@@ -130,7 +130,10 @@ class MenuTree(View):
         d = DocModel.objects.get(pk=pk)
         if (d.doctype | 4 == d.doctype) and d.pwd != data.get('pwd', ''):
             return JsonResponse({'result': 'fail', 'msg': 'permission die'})
-        html = static_doc(d)
+        if d.source_type == 'rst' or d.doctype | 2 == d.doctype:
+            html = rst(d.content)
+        else:
+            html = markdown(d.content)
         if source is True:
             return JsonResponse({'result': 'ok', 'doc': html, 'source': d.content})
         else:
@@ -233,20 +236,17 @@ class MenuTree(View):
         o = json.loads(request.body)
         pk = o.get('id')
         pwd = o.get('pwd') or ''
-        d = DocModel.objects.get(pk=pk)
-        if d.doctype | 4 == d.doctype:
-            # change password
-            if d.pwd != o.get('oldpwd'):
-                return JsonResponse({'result': 'failed', 'msg': 'invalid password'})
-            d.pwd = pwd
-            d.save()
-            return JsonResponse({'result': 'ok'})
-        else:
+        if pk > 0:
+            d = DocModel.objects.get(pk=pk)
             d.doctype |= 4
             d.pwd = pwd
             d.save(update_fields=['doctype', 'pwd'])
-            unstatic_doc(d)
-            return JsonResponse({'result': 'ok'})
+        else:
+            return JsonResponse({'result': 'failed', 'msg': 'Root node cannot set password'})
+        unstatic_doc(d)
+        # set pwd then update all parent static file
+        static_parent_folder(d)
+        return JsonResponse({'result': 'ok'})
 
     def copynode(self, request, *args, **kwargs):
         data = json.loads(request.body)
@@ -304,12 +304,16 @@ def publish_doc(request):
         return JsonResponse({'result': 'failed', 'msg': 'permission die'})
 
     pk = json.loads(request.body).get('id')
-    d = DocModel.objects.get(pk=pk)
-    d.doctype = (d.doctype | 8) ^ 8
-    d.status = 1
-    d.save(update_fields=['status', 'doctype'])
+    if pk > 0:
+        d = DocModel.objects.get(pk=pk)
+        d.doctype = (d.doctype | 8) ^ 8
+        d.status = 1
+    else:
+        d = type('', (object,), {'doctype': 2, 'status': 1, 'pk': 0, 'parent': '[]'})
     static_doc(d)
-    return JsonResponse({'result': 'ok', 'data': '/staticpage/%s' % md5(str(d.pk).encode('utf8')).hexdigest()[8:-8]})
+    # static all parent
+    static_parent_folder(d)
+    return JsonResponse({'result': 'ok', 'data': '/staticpage/%s' % md5(str(pk).encode('utf8')).hexdigest()[8:-8]})
 
 
 def unpublish_doc(request):
@@ -317,21 +321,34 @@ def unpublish_doc(request):
         return JsonResponse({'result': 'failed', 'msg': 'permission die'})
 
     pk = json.loads(request.body).get('id')
-    d = DocModel.objects.get(pk=pk)
-    d.status = 0
-    d.doctype |= 8
-    d.save(update_fields=['status', 'doctype'])
+    if pk > 0:
+        d = DocModel.objects.get(pk=pk)
+        d.status = 0
+        d.doctype |= 8
+    else:
+        d = type('', (object,), {'doctype': 2, 'status': 1, 'pk': 0, 'parent': '[]'})
     unstatic_doc(d)
+    # unpublish then update all parent static file
+    static_parent_folder(d)
     return JsonResponse({'result': 'ok'})
 
 
-def static_catlog(d):
-    return ''
+def static_folder(d):
+    # delete children, pwd and publish and  unpublish doc, then update static html
+    s = SortedCatlogModel.objects.get(folder=d.pk)
+    children = json.loads(s.children)
+    html = []
+    if children:
+        cs = DocModel.objects.filter(pk__in=children, status=1, isdel=False)
+        for c in cs:
+            if c.doctype | 4 != c.doctype:  # not pwd node
+                html.append('<a href="%s">%s</a>' % (c.staticpage, c.title))
+    return ''.join(html)
 
 
 def static_doc(d):
     if d.doctype | 2 == d.doctype:
-        content = static_catlog(d)
+        content = static_folder(d)
     else:
         if d.source_type == 'rst':
             content = rst(d.content)
@@ -343,8 +360,9 @@ def static_doc(d):
         path = os.path.join(settings.STATIC_PAGE, filename)
         with codecs.open(path, 'w', encoding='utf8') as f:
             f.write(content)
-        d.staticpage = '/staticpage/%s' % filename
-        d.save(update_fields=['staticpage'])
+        if d.pk > 0:
+            d.staticpage = '/staticpage/%s' % filename
+            d.save(update_fields=['status', 'doctype', 'staticpage'])
     return content
 
 
@@ -355,5 +373,11 @@ def unstatic_doc(d):
         os.remove(path)
     except:
         pass
-    d.staticpage = '#'
-    d.save(update_fields=['staticpage'])
+    if d.pk > 0:
+        d.staticpage = '#'
+        d.save(update_fields=['status', 'doctype', 'staticpage'])
+
+
+def static_parent_folder(child):
+    for d in DocModel.objects.filter(pk__in=json.loads(child.parent)):
+        static_doc(d)
