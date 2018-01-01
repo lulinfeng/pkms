@@ -69,15 +69,14 @@
 						inst.trigger('edit', obj)
 					}
 				}
-				tmp['rename'] = _tmp.rename
-
+				tmp['publish'] = {
+					label: "Publish"
+					,action: function (data) {page.api.publish(data)}
+				}
 				tmp['operation'] = {
 					label: 'More...'
 					,submenu: {
-						publish: {
-							label: "Publish"
-							,action: function (data) {page.api.publish(data)}
-						}
+						rename: _tmp.rename
 						,unpublish: {
 							label: "Unpublish"
 							,action: function (data) {page.api.unpublish(data)}

@@ -72,7 +72,12 @@ class MenuTree(View):
                 folder=0, defaults={'children': self._bytes([])}
             )
             return JsonResponse(
-                [{'text': 'Root', 'children': True, 'data': {'id': 0}, 'state': {'disabled': True}}],
+                [{'text': 'Root',
+                    'children': True,
+                    'data': {'id': 0},
+                    'state': {'disabled': True},
+                    'a_attr': {'href': '/staticpage/95d565ef66e7dff9'},
+                }],
                 safe=False
             )
         elif pk not in (0, '0'):
@@ -165,7 +170,7 @@ class MenuTree(View):
         pk = data['id']
         if pk in (0, '0'):
             return JsonResponse({'result': 'failed', 'msg': "Don't do that!"})
-        _type = data['type']
+        # _type = data['type']
         parent = data['parent']
 
         doc = DocModel.objects.get(pk=pk)
@@ -178,10 +183,12 @@ class MenuTree(View):
         if not parents:
             doc.isdel = True
             doc.parent = str([0])
+            # del static html
+            unstatic_doc(doc)
         else:
             doc.parent = str(parents)
         doc.save(update_fields=['isdel', 'parent'])
-        # delete form catlog
+        # delete form catalog
         s = SortedCatlogModel.objects.get(folder=parent)
         ch = self._loads(s.children)
         ch.remove(pk)
@@ -190,6 +197,13 @@ class MenuTree(View):
         # recursively delete sub node
         # if _type | 2 == _type:
         #     self._delete_folder(pk)
+
+        # update static parent
+        if parent == 0:
+            p = type('', (object,), {'pk': 0, 'status': 1, 'parent': '[]', 'doctype': 2})
+        else:
+            p = DocModel.objects.get(pk=parent)
+        static_doc(p)
         return JsonResponse({'result': 'ok', 'msg': ''})
 
     def rename(self, request, *args, **kwargs):
@@ -273,6 +287,15 @@ class MenuTree(View):
         target_folder.children.insert(pos, pk)
         target_folder.children = self._bytes(target_folder.children)
         target_folder.save(update_fields=['children'])
+
+        # update parent static html file, if node is publish
+        if doc.doctype | 4 != doc.doctype and doc.doctype | 8 != doc.doctype:
+            if target_pk == 0:
+                p = type('', (object,), {'doctype': 2, 'status': 1, 'pk': 0, 'parent': '[]'})
+            else:
+                p = DocModel.objects.get(pk=target_pk)
+            static_doc(p)
+
         return JsonResponse({'result': 'ok', 'msg': ''})
 
 
@@ -379,5 +402,8 @@ def unstatic_doc(d):
 
 
 def static_parent_folder(child):
-    for d in DocModel.objects.filter(pk__in=json.loads(child.parent)):
+    parent = json.loads(child.parent)
+    for d in DocModel.objects.filter(pk__in=parent):
         static_doc(d)
+    if 0 in parent:
+        static_doc(type('', (object,), {'doctype': 2, 'status': 1, 'pk': 0, 'parent': '[]'}))
