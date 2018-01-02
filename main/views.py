@@ -21,6 +21,13 @@ from markup.templatetags.markup import restructuredtext as rst, markdown
 from main.models import DocModel, SortedCatlogModel
 
 
+def _loads(data):
+    if six.PY3:
+        return json.loads(data)
+    else:
+        return json.loads(bytes(data))
+
+
 def my_perm_required(perm):
     def decorator(view_func):
         @wraps(view_func, assigned=available_attrs(view_func))
@@ -76,7 +83,7 @@ class MenuTree(View):
                     'children': True,
                     'data': {'id': 0},
                     'state': {'disabled': True},
-                    'a_attr': {'href': '/staticpage/95d565ef66e7dff9'},
+                    'a_attr': {'href': '/staticpage/%s' % generate_filename(0)},
                 }],
                 safe=False
             )
@@ -336,7 +343,7 @@ def publish_doc(request):
     static_doc(d)
     # static all parent
     static_parent_folder(d)
-    return JsonResponse({'result': 'ok', 'data': '/staticpage/%s' % md5(str(pk).encode('utf8')).hexdigest()[8:-8]})
+    return JsonResponse({'result': 'ok', 'data': '/staticpage/%s' % generate_filename(pk)})
 
 
 def unpublish_doc(request):
@@ -359,7 +366,7 @@ def unpublish_doc(request):
 def static_folder(d):
     # delete children, pwd and publish and  unpublish doc, then update static html
     s = SortedCatlogModel.objects.get(folder=d.pk)
-    children = json.loads(s.children)
+    children = _loads(s.children)
     html = []
     if children:
         cs = DocModel.objects.filter(pk__in=children, status=1, isdel=False)
@@ -379,7 +386,7 @@ def static_doc(d):
             content = markdown(d.content)
     unpublish = d.doctype | 8 == d.doctype or d.doctype | 4 == d.doctype
     if not unpublish:
-        filename = md5(str(d.pk).encode('utf8')).hexdigest()[8:-8]
+        filename = generate_filename(d.pk)
         path = os.path.join(settings.STATIC_PAGE, filename)
         with codecs.open(path, 'w', encoding='utf8') as f:
             f.write(content)
@@ -390,7 +397,7 @@ def static_doc(d):
 
 
 def unstatic_doc(d):
-    filename = md5(str(d.pk).encode('utf8')).hexdigest()[8:-8]
+    filename = generate_filename(d.pk)
     path = os.path.join(settings.STATIC_PAGE, filename)
     try:
         os.remove(path)
@@ -407,3 +414,9 @@ def static_parent_folder(child):
         static_doc(d)
     if 0 in parent:
         static_doc(type('', (object,), {'doctype': 2, 'status': 1, 'pk': 0, 'parent': '[]'}))
+
+
+def generate_filename(pk):
+    m = md5(str(pk).encode('utf8'))
+    m.update(settings.SECRET_KEY)
+    return m.hexdigest()[8:-8]
