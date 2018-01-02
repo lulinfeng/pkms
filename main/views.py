@@ -418,5 +418,5 @@ def static_parent_folder(child):
 
 def generate_filename(pk):
     m = md5(str(pk).encode('utf8'))
-    m.update(settings.SECRET_KEY)
+    m.update(settings.SECRET_KEY.encode('utf8'))
     return m.hexdigest()[8:-8]
