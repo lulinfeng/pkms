@@ -844,7 +844,7 @@ $(function () {
 		_t.commands.addCommand({name: 'save', bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
 			exec: page.api.saveDoc
 		})
-		_t.commands.addCommand({name: 'quit', exec: page.op.quitEditor })
+		_t.commands.addCommand({name: 'quit', bindKey: 'ctrl-q', exec: page.op.quitEditor })
 		_t.commands.addCommand({name: 'savequit', exec: page.api.saveDocQuitEditor })
 		_t.commands.addCommand({name: 'raise', bindKey: 'Ctrl-J', exec: page.op.raiseEditor})
 		_t.commands.addCommand({name: 'lower', bindKey: 'Ctrl-K', exec: page.op.lowerEditor})
@@ -873,7 +873,14 @@ $(function () {
 		return _t
 	})()
 	ace.config.loadModule("ace/keyboard/vim", function(m) {
-		var VimApi = require("ace/keyboard/vim").CodeMirror.Vim
+		var Vim = require("ace/keyboard/vim")
+		var VimApi = Vim.CodeMirror.Vim
+		for (var i = 0; i < Vim.handler.defaultKeymap.length; i++) {
+			if (Vim.handler.defaultKeymap[i].keys == '<C-[>') {
+				Vim.handler.defaultKeymap.splice(i, 1)
+				i -= 1
+			}
+		}
 		VimApi.defineEx("write", "w", function(cm, input) {
 			cm.ace.execCommand("save")
 		})
