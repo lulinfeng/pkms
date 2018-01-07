@@ -484,7 +484,7 @@ page.op = {
 
 page.event = {
 	vimReadDoc: function () {
-		$('#main').on('keydown', '#docs', function (e) {
+		$('#main').on('keydown', '.docs', function (e) {
 			switch(e.which) {
 				case 71: // home g end G
 					e.preventDefault()
@@ -913,3 +913,33 @@ $(function () {
 	page.event.init()
 	page.pwdpanel = new pwdpanel()
 })
+
+page.tabs = {}
+
+page.Tab = {
+	tabs: {}
+	,active: null
+	,newTab: function (node) {
+		// insert html
+		var tab = {}
+		tab.li = document.createElement('li')
+		tab.li.textContent = node.text
+		$(tab.li).on('click', function () {
+			tab.frame.show()
+		})
+		tab.frame = function () {
+			$('#docs_' + node.data.id).show()
+			// editor active
+		}
+	}
+	,activeTab: function (node) {
+		$(active).removeClass('active')
+		active = $(tabs[node.data.id]).addCommand('active')
+		$('#docs_' + node.data.id).show()
+	}
+	,createSection: function () {
+
+	}
+}
+
+
