@@ -917,28 +917,69 @@ $(function () {
 page.tabs = {}
 
 page.Tab = {
-	tabs: {}
-	,active: null
+	$el: (function () {
+		var el = $('main').children().first()
+		if (el.is('ul.nav-tabs')) {
+			return el
+		}
+		el = $('<ul class="nav-tabs"></ul>')
+		$('main').prepend(el)
+		return el
+	}())
+	,tabs: {}
+	,current: null
 	,newTab: function (node) {
+		// hide active tab
+		if (page.Tab.current) {
+			page.Tab.current.hide()
+		}
 		// insert html
-		var tab = {}
+		var tab = {node: node}
 		tab.li = document.createElement('li')
 		tab.li.textContent = node.text
-		$(tab.li).on('click', function () {
-			tab.frame.show()
+		page.Tab.$el.append(tab.li)
+		// event
+		$(tab.li).on('click', function (e) {
+			tab.show()
 		})
-		tab.frame = function () {
-			$('#docs_' + node.data.id).show()
+		tab.show = function () {
+			$(tab.li).addClass('active')
+			$('#pkms_tab_' + node.data.id).show()
 			// editor active
 		}
+		tab.hide = function () {
+			$(tab.li).removeClass('active')
+			$('#pkms_tab_' + node.data.id).hide()
+		}
+		// state
+		page.Tab.current = tabs[node.id] = tab
+		// create tab contents
+		page.Tab.createSection(node)
 	}
 	,activeTab: function (node) {
-		$(active).removeClass('active')
+		$(current).removeClass('active')
 		active = $(tabs[node.data.id]).addCommand('active')
-		$('#docs_' + node.data.id).show()
+		$('#pkms_tab_' + node.data.id).show()
 	}
-	,createSection: function () {
-
+	,createSection: function (node) {
+		var h = '<section class="rst-content" id="pkms_tab_'+ node.id +'">'
+			+ '<div class="docs" tabindex="1"></div>'
+			+ '<div class="editor" id="editor'+ node.id +'"></div>'
+			+ '</section>'
+		$('#main').append(h)
+		/////////////////
+		// init editor //
+		/////////////////
+	}
+	,close: function (node) {
+		$('#pkms_tab_' + node.id).remove()
+		var li = tabs[node.id].li
+		$(li).remove()
+		delete tabs[node.id]
+		// change active to other li
+		if ($(li).hasClass('active')) {
+			$(li).prev().click()
+		}
 	}
 }
 
