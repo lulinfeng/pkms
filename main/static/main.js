@@ -2,10 +2,6 @@
 	page.base = {
 		line: 30
 		,page: 550
-		,docs_bottom: 50
-		,editor_top: 50
-		,fullScreen: false
-		,fullHeight: false
 		,L_R_pos: 200
 		,menu_option: {
 			'core': {
@@ -115,12 +111,13 @@ page.api = {
 				data.node.data.id = resp.id
 				// file 1
 				if ((data.node.type | 1) == data.node.type) {
-					$('#docs').css({bottom: page.base.docs_bottom + '%'}).empty()
+					page.Tab.newTab(data.node)
+					page.Tab.current.$doc.css({bottom: page.Tab.current.docs_bottom + '%'}).empty()
 					data.instance.deselect_all()
 					data.instance.select_node(data.node, true)
-					$('#editor').css({top: page.base.editor_top + '%'}).show()
-					page.editor.session.setValue('')
-					page.editor.focus()
+					$(page.Tab.current.editor.container).css({top: page.Tab.current.editor_top + '%'}).show()
+					page.Tab.current.editor.session.setValue('')
+					page.Tab.current.editor.focus()
 				}
 			} else {
 				alert(resp.msg)
@@ -144,7 +141,9 @@ page.api = {
 			url: '/menu/',
 			data: JSON.stringify({'id': data.node.data.id, 'text': data.node.text})
 		}).done(function (resp) {
-			if (resp.result != 'ok') {
+			if (resp.result == 'ok') {
+				$(page.Tab.current.li).find('span').text(data.node.text)
+			} else {
 				alert(resp.msg)
 				data.instance.refresh()
 			}
@@ -205,7 +204,7 @@ page.api = {
 			data: JSON.stringify({'id': pk, content: editor.getValue()})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
-				$('#docs').html(resp.doc)
+				page.Tab.current.$doc.html(resp.doc)
 			} else {
 				alert('保存失败: ' + resp.msg)
 			}
@@ -221,12 +220,15 @@ page.api = {
 					data: JSON.stringify(data.node.data)
 				}).done(function (resp) {
 					if (resp.result == 'ok') {
-						$('#docs').html(resp.doc).css('bottom', 0)
-						if ($('.document').has('.topic').length) {
-							var w = $('.topic')[0].clientWidth
-							$('.document').css({'padding-right': w})
+						page.Tab.current.node_id = data.node.data.id
+						page.Tab.current.$doc.html(resp.doc).css('bottom', 0)
+						if (page.Tab.current.$doc.has('.topic').length) {
+							var w = page.Tab.current.$doc.find('.topic')[0].clientWidth
+							page.Tab.current.$doc.find('.document').css({'padding-right': w})
 						}
-						$('#editor').hide()
+						$(page.Tab.current.editor.container).hide()
+						$(page.Tab.current.li).find('span').text(data.node.text)
+						page.Tab.current.show()
 					} else {
 						alert(resp.msg)
 					}
@@ -238,15 +240,15 @@ page.api = {
 					url: data.node.a_attr.href,
 					data: JSON.stringify(data.node.data)
 				}).done(function (resp) {
-					$('#docs').html(resp).css('bottom', 0)
-					if ($('.document').has('.topic').length) {
-						var w = $('.topic')[0].clientWidth
-						$('.document').css({'padding-right': w})
+					page.Tab.current.$doc.html(resp).css('bottom', 0)
+					if (page.Tab.current.$doc.has('.topic').length) {
+						var w = page.Tab.current.$doc.find('.topic')[0].clientWidth
+						page.Tab.current.$doc.find('.document').css({'padding-right': w})
 					}
-					$('#editor').hide()
+					$(page.Tab.current.editor.container).hide()
 				}).fail(function (e) {
-					$('#docs').html(e.responseText).css('bottom', 0)
-					$('#editor').hide()
+					page.Tab.current.$doc.html(e.responseText).css('bottom', 0)
+					$(page.Tab.current.editor.container).hide()
 				})
 			}
 		}
@@ -260,10 +262,10 @@ page.api = {
 			data: JSON.stringify({'id': obj.data.id, 'source': true})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
-				$('#docs').html(resp.doc).css({'bottom': page.base.docs_bottom + '%'});
-				page.editor.session.setValue(resp.source);
-				page.editor.focus();
-				$('#editor').show();
+				page.Tab.current.$doc.html(resp.doc).css({'bottom': page.Tab.current.docs_bottom + '%'});
+				page.Tab.current.editor.session.setValue(resp.source);
+				page.Tab.current.editor.focus();
+				$(page.Tab.current.editor.container).show();
 			} else {
 				alert(resp.msg);
 			}
@@ -285,6 +287,9 @@ page.api = {
 			}).done(function (resp) {
 				if (resp.result == 'ok') {
 					data.instance.get_node(prev_dom, true).find('a').first().focus()
+					if (data.node.data.tabed) {
+						page.Tab.close(data.node)
+					}
 				} else {
 					alert(resp.msg)
 					data.instance.refresh()
@@ -297,8 +302,8 @@ page.api = {
 	,saveDocQuitEditor: function (editor) {
 		page.api.saveDoc(editor).done(function (resp) {
 			if (resp.result == 'ok') {
-				$('#docs').css('bottom', 0).focus()
-				$('#editor').hide()
+				page.Tab.current.$doc.css('bottom', 0).focus()
+				$(editor.container).hide()
 			}
 		})
 	}
@@ -359,50 +364,52 @@ page.op = {
 		inst.create_node(obj, o, _t, function (node) {inst.edit(node)})
 	}
 	,quitEditor: function (editor) {
-		$('#editor').hide()
-		var sl = page.menu.get_selected()
-		page.menu.element.find('#'+ sl + '_anchor').click()
-		$('#docs').css({bottom: 0}).focus()
+		// $('#editor').hide()
+		editor.container.style.display = 'none'
+		// var sl = page.menu.get_selected()
+		// page.menu.element.find('#'+ sl + '_anchor').click()
+		// todo get current active tab's docs
+		page.Tab.current.$doc.css({bottom: 0}).focus()
 	}
 	,lowerEditor: function (editor) {
-		if (page.base.docs_bottom < 95) {
-			page.base.docs_bottom += 5
-			page.base.editor_top -= 5
+		if (page.Tab.current.docs_bottom < 95) {
+			page.Tab.current.docs_bottom += 5
+			page.Tab.current.editor_top -= 5
 			if (page.base.editor_top <= 5) {
-				$('#editor').css({top: '40px'})
+				$(editor.container).css({top: '40px'})
 			} else {
-				$('#editor').css({top: page.base.editor_top + '%'})
+				$(editor.container).css({top: page.Tab.current.editor_top + '%'})
 			}
-			$('#docs').css({bottom: page.base.docs_bottom + '%'})
-			page.editor.resize()
+			page.Tab.current.$doc.css({bottom: page.Tab.current.docs_bottom + '%'})
+			editor.resize()
 		}
 	}
 	,raiseEditor: function (editor) {
-		if (page.base.docs_bottom > 10) {
-			page.base.docs_bottom -= 5
-			page.base.editor_top += 5
-			$('#editor').css({top: page.base.editor_top + '%'})
-			$('#docs').css({bottom: page.base.docs_bottom + '%'})
-			page.editor.resize()
+		if (page.Tab.current.docs_bottom > 10) {
+			page.Tab.current.docs_bottom -= 5
+			page.Tab.current.editor_top += 5
+			$(editor.container).css({top: page.Tab.current.editor_top + '%'})
+			page.Tab.current.$doc.css({bottom: page.Tab.current.docs_bottom + '%'})
+			editor.resize()
 		}
 	}
 	,fullScreenEditor: function (editor) {
-		if (!page.base.fullScreen) {
-			$('#editor').css({top: '40px', left: 0})
+		if (!page.Tab.current.fullScreen) {
+			$(editor.container).css({top: '40px', left: 0})
 		} else {
-			$('#editor').css({top: page.base.editor_top + '%', left: page.base.L_R_pos})
+			$(editor.container).css({top: page.Tab.current.editor_top + '%', left: page.base.L_R_pos})
 		}
-		page.base.fullScreen = !page.base.fullScreen
-		page.editor.resize()
+		page.Tab.current.fullScreen = !page.Tab.current.fullScreen
+		editor.resize()
 	}
 	,fullHeightEditor: function (editor) {
-		if (!page.base.fullHeight) {
-			$('#editor').css({top: '40px'})
+		if (!page.Tab.current.fullHeight) {
+			$(editor.container).css({top: '40px'})
 		} else {
-			$('#editor').css({top: page.base.editor_top + '%', left: page.base.L_R_pos})
+			$(editor.container).css({top: page.Tab.current.editor_top + '%', left: page.base.L_R_pos})
 		}
-		page.base.fullHeight = !page.base.fullHeight
-		page.editor.resize()
+		page.Tab.current.fullHeight = !page.Tab.current.fullHeight
+		editor.resize()
 	}
 	,vimOpSubmenu: function (e) {
 		var o = null
@@ -483,9 +490,52 @@ page.op = {
 }
 
 page.event = {
-	vimReadDoc: function () {
+	openNode: function (e)	{
+		e.preventDefault();
+		if(this.is_closed(e.currentTarget)) {
+			var node = this.get_node(e.currentTarget)
+			if ((node.type | 4) == node.type) {
+				page.pwdpanel.show(e, function (pwd) {
+					node.data ? node.data.pwd=pwd : node.data={pwd: pwd}
+					this.open_node(e.currentTarget, function (o) { this.get_node(o, true).children('.jstree-anchor').focus(); });
+				}, this)
+			} else {
+				this.open_node(e.currentTarget, function (o) { this.get_node(o, true).children('.jstree-anchor').focus(); });
+			}
+		}
+		else if (this.is_open(e.currentTarget)) {
+			var o = this.get_node(e.currentTarget, true).children('.jstree-children')[0];
+			if(o) { $(this._firstChild(o)).children('.jstree-anchor').focus()}
+			else {
+				e.type = "click";
+				$(e.currentTarget).trigger(e);
+			}
+		} else {
+			e.type = "click";
+			$(e.currentTarget).trigger(e);
+		}
+	}
+	,vimReadDoc: function () {
 		$('#main').on('keydown', '.docs', function (e) {
 			switch(e.which) {
+				case 69: // ctrl-e edit doc
+					e.preventDefault()
+					if (e.ctrlKey) {
+						var node_id = page.Tab.current.node_id
+						var data = Object.values(page.menu._model.data)
+
+						var i = 0
+						for (; i < data.length; i++) {
+							if (data[i].id == $.jstree.root) {
+								continue
+							}
+							if (node_id == data[i].data.id) {
+								page.api.editDoc(e, data[i])
+								return
+							}
+						}
+					}
+					break
 				case 71: // home g end G
 					e.preventDefault()
 					var h = this.scrollHeight - this.clientHeight
@@ -566,6 +616,20 @@ page.event = {
 		page.menu.element//.on('changed.jstree', page.api.getDoc)
 		.on('changed.jstree', function (e, data) {
 			if (data.action == 'select_node') {
+				// opened to tab just to active it
+				if (data.node.data.tabed) {
+					page.Tab.activate(data.node.data.id)
+					return
+				}
+				if (data.event && data.event.ctrlKey) {
+					page.Tab.newTab(data.node)
+				} else {
+					page.Tab.activate('default')
+					page.Tab.current.node.id = data.node.id
+					if (data.node.data.id == page.Tab.current.node_id) {
+						return
+					}
+				}
 				// pwd 4
 				if ((data.node.type | 4) == data.node.type) {
 					if ((data.node.type | 1) == data.node.type) {
@@ -576,8 +640,11 @@ page.event = {
 								,data: JSON.stringify({id: data.node.data.id, pwd: pwd})
 							}).done(function (resp) {
 								if (resp.result == 'ok') {
-									$('#docs').html(resp.doc).css('bottom', 0)
-									$('#editor').hide()
+									// $('#docs').html(resp.doc).css('bottom', 0)
+									// $('#editor').hide()
+									page.Tab.current.$doc.html(resp.doc).css('bottom', 0)
+									$(page.Tab.current.editor.container).hide()
+									page.Tab.current.node_id = data.node.data.id
 									$(e.target).focus()
 								} else {
 									page.message('permission die')
@@ -640,7 +707,7 @@ page.event = {
 			var sl = page.menu.get_selected()
 			page.menu.element.find('#'+ sl + '_anchor').focus()
 		})
-		page.menu.keydown_events.h = function (e) {
+		page.menu.settings.core.keyboard.h = function (e) {
 			e.preventDefault();
 			if(this.is_open(e.currentTarget)) {
 				this.close_node(e.currentTarget);
@@ -650,51 +717,28 @@ page.event = {
 				if(o && o.id !== $.jstree.root) { this.get_node(o, true).children('.jstree-anchor').focus(); }
 			}
 		}
-		page.menu.keydown_events.k = function (e) {
+		page.menu.settings.core.keyboard.k = function (e) {
 			e.preventDefault();
 			var o = this.get_prev_dom(e.currentTarget);
 			if(o && o.length) { o.children('.jstree-anchor').focus(); }
 		}
-		page.menu.keydown_events.l = function (e) {
-			e.preventDefault();
-			if(this.is_closed(e.currentTarget)) {
-				var node = this.get_node(e.currentTarget)
-				if ((node.type | 4) == node.type) {
-					page.pwdpanel.show(e, function (pwd) {
-						node.data ? node.data.pwd=pwd : node.data={pwd: pwd}
-						this.open_node(e.currentTarget, function (o) { this.get_node(o, true).children('.jstree-anchor').focus(); });
-					}, this)
-				} else {
-					this.open_node(e.currentTarget, function (o) { this.get_node(o, true).children('.jstree-anchor').focus(); });
-				}
-			}
-			else if (this.is_open(e.currentTarget)) {
-				var o = this.get_node(e.currentTarget, true).children('.jstree-children')[0];
-				if(o) { $(this._firstChild(o)).children('.jstree-anchor').focus()}
-				else {
-					e.type = "click";
-					$(e.currentTarget).trigger(e);
-				}
-			} else {
-				e.type = "click";
-				$(e.currentTarget).trigger(e);
-			}
-		}
-		page.menu.keydown_events.j = function (e) {
+		page.menu.settings.core.keyboard.l = page.event.openNode
+		page.menu.settings.core.keyboard['ctrl-l'] = page.event.openNode
+		page.menu.settings.core.keyboard.j = function (e) {
 			e.preventDefault();
 			var o = this.get_next_dom(e.currentTarget);
 			if(o && o.length) { o.children('.jstree-anchor').focus(); }
 		}
-		page.menu.keydown_events.g = function (e) {
+		page.menu.settings.core.keyboard.g = function (e) {
 			e.preventDefault();
 			var o = this._firstChild(this.get_container_ul()[0]);
 			if(o) { $(o).children('.jstree-anchor').filter(':visible').focus(); }
 		}
-		page.menu.keydown_events['shift-g'] = function (e) {
+		page.menu.settings.core.keyboard['shift-g'] = function (e) {
 			e.preventDefault();
 			this.element.find('.jstree-anchor').filter(':visible').last().focus();
 		}
-		page.menu.keydown_events.d = function (e) {
+		page.menu.settings.core.keyboard.d = function (e) {
 			this.show_contextmenu(e.currentTarget, e.pageX, e.pageY, e);
 		}
 	}
@@ -709,33 +753,58 @@ page.event = {
 					if (page.base.L_R_pos == 0) return
 					page.base.L_R_pos -= 5
 					$('.menu').width(0)
+					page.Tab.$el.css({'margin-left': -8})
 					$('.docs').css({left: 10})
 					$('.editor').css({left: 0})
-					page.editor.resize()
+					// page.editor.resize()
 				} else if (e.which == 77) {
 					e.preventDefault()
 					$('.menu').width(page.base.L_R_pos)
+					page.Tab.$el.css({'margin-left': page.base.L_R_pos - 8})
 					$('.docs').css({left: page.base.L_R_pos + 10})
 					$('.editor').css({left: page.base.L_R_pos})
-					page.editor.resize()
+					// page.editor.resize()
 				}
 				if (e.which == 188) {
 					e.preventDefault()
 					if (page.base.L_R_pos == 0) return
 					page.base.L_R_pos -= 5
 					$('.menu').width(page.base.L_R_pos)
+					page.Tab.$el.css({'margin-left': page.base.L_R_pos - 8})
 					$('.docs').css({left: page.base.L_R_pos + 10})
 					$('.editor').css({left: page.base.L_R_pos})
-					page.editor.resize()
+					// page.editor.resize()
 				} else if (e.which == 190) {
 					e.preventDefault()
 					page.base.L_R_pos += 5
 					$('.menu').width(page.base.L_R_pos)
+					page.Tab.$el.css({'margin-left': page.base.L_R_pos - 8})
 					$('.docs').css({left: page.base.L_R_pos + 10})
 					$('.editor').css({left: page.base.L_R_pos})
-					page.editor.resize()
+					// page.editor.resize()
 				}
 			}
+		})
+	}
+	,selectTab: function () {
+		$('body').on('keydown', function (e) {
+			if (e.altKey && e.which == 87) {
+				// alt-w
+				e.preventDefault()
+				page.Tab.current.close()
+				return
+			}
+			if (!e.altKey || e.shiftKey || e.ctrlKey || e.which < 49 || e.which > 57) {
+				return
+			}
+			e.preventDefault()
+			var l = Object.keys(page.tabs).length
+			if (l == 0) return
+			var n = e.which - 49
+			if (n > l - 1) {
+				n = l - 1
+			}
+			page.Tab.$el.children().find('span')[n].click()
 		})
 	}
 	,init: function () {
@@ -743,6 +812,7 @@ page.event = {
 		this.menuOperation()
 		this.submenuOperation()
 		this.leftRightWidth()
+		this.selectTab()
 	}
 }
 
@@ -835,43 +905,53 @@ pwdpanel.prototype = {
 	}
 }
 
+// all tab editors
+page.editors = {}
+
+page.Editor = function (id) {
+	if (page.editors.hasOwnProperty(id)) {
+		return page.editors[id]
+	}
+	var _t = ace.edit(id)
+	_t.setTheme("ace/theme/twilight")
+	_t.session.setMode("ace/mode/rst")
+	_t.setKeyboardHandler("ace/keyboard/vim")
+	_t.commands.addCommand({name: 'save', bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+		exec: page.api.saveDoc
+	})
+	_t.commands.addCommand({name: 'quit', bindKey: 'ctrl-q', exec: page.op.quitEditor })
+	_t.commands.addCommand({name: 'savequit', exec: page.api.saveDocQuitEditor })
+	_t.commands.addCommand({name: 'raise', bindKey: 'Ctrl-J', exec: page.op.raiseEditor})
+	_t.commands.addCommand({name: 'lower', bindKey: 'Ctrl-K', exec: page.op.lowerEditor})
+	_t.commands.addCommand({name: "Toggle Fullscreen", bindKey: "F11",
+		exec: page.op.fullScreenEditor
+	})
+	_t.commands.addCommand({name: "Toggle Max Height", bindKey: "F10",
+		exec: page.op.fullHeightEditor
+	})
+	// increase font size
+	_t.commands.addCommand({name: 'increase', bindKey: 'Alt-+', exec: page.op.increaseEditor})
+	// decrease font size
+	_t.commands.addCommand({name: 'decrease', bindKey: 'Alt--', exec: page.op.decreaseEditor})
+	_t.commands.addCommand({name: 'docScrollUp', bindKey: 'Ctrl-Shift-K', exec: function (editor) {
+		page.op.raiseDoc(page.Tab.current.$doc[0])
+	}})
+	_t.commands.addCommand({name: 'docScrollDown', bindKey: 'Ctrl-Shift-J', exec: function (editor) {
+		page.op.lowerDoc(page.Tab.current.$doc[0])
+	}})
+	_t.commands.addCommand({name: 'docIncrease', bindKey: 'Alt-Shift-+', exec: function (editor) {
+		page.op.increaseDoc(page.Tab.current.$doc[0])
+	}})
+	_t.commands.addCommand({name: 'docDecrease', bindKey: 'Alt-Shift--', exec: function (editor) {
+		page.op.decreaseDoc(page.Tab.current.$doc[0])
+	}})
+	page.editors[id] = _t
+	return _t
+}
+
 $(function () {
-	page.editor = (function () {
-		var _t = ace.edit('editor')
-		_t.setTheme("ace/theme/twilight")
-		_t.session.setMode("ace/mode/rst")
-		_t.setKeyboardHandler("ace/keyboard/vim")
-		_t.commands.addCommand({name: 'save', bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
-			exec: page.api.saveDoc
-		})
-		_t.commands.addCommand({name: 'quit', bindKey: 'ctrl-q', exec: page.op.quitEditor })
-		_t.commands.addCommand({name: 'savequit', exec: page.api.saveDocQuitEditor })
-		_t.commands.addCommand({name: 'raise', bindKey: 'Ctrl-J', exec: page.op.raiseEditor})
-		_t.commands.addCommand({name: 'lower', bindKey: 'Ctrl-K', exec: page.op.lowerEditor})
-		_t.commands.addCommand({name: "Toggle Fullscreen", bindKey: "F11",
-			exec: page.op.fullScreenEditor
-		})
-		_t.commands.addCommand({name: "Toggle Max Height", bindKey: "F10",
-			exec: page.op.fullHeightEditor
-		})
-		// increase font size
-		_t.commands.addCommand({name: 'increase', bindKey: 'Alt-+', exec: page.op.increaseEditor})
-		// decrease font size
-		_t.commands.addCommand({name: 'decrease', bindKey: 'Alt--', exec: page.op.decreaseEditor})
-		_t.commands.addCommand({name: 'docScrollUp', bindKey: 'Ctrl-Shift-K', exec: function (editor) {
-			page.op.raiseDoc(document.getElementById('docs'))
-		}})
-		_t.commands.addCommand({name: 'docScrollDown', bindKey: 'Ctrl-Shift-J', exec: function (editor) {
-			page.op.lowerDoc(document.getElementById('docs'))
-		}})
-		_t.commands.addCommand({name: 'docIncrease', bindKey: 'Alt-Shift-+', exec: function (editor) {
-			page.op.increaseDoc(document.getElementById('docs'))
-		}})
-		_t.commands.addCommand({name: 'docDecrease', bindKey: 'Alt-Shift--', exec: function (editor) {
-			page.op.decreaseDoc(document.getElementById('docs'))
-		}})
-		return _t
-	})()
+	page.Tab.newTab({text: '', data: {id: 'default'}, id: 0})
+	// page.editor = page.Editor('editor')
 	ace.config.loadModule("ace/keyboard/vim", function(m) {
 		var Vim = require("ace/keyboard/vim")
 		var VimApi = Vim.CodeMirror.Vim
@@ -931,55 +1011,91 @@ page.Tab = {
 	,newTab: function (node) {
 		// hide active tab
 		if (page.Tab.current) {
-			page.Tab.current.hide()
+			page.Tab.current.inactivate()
 		}
 		// insert html
-		var tab = {node: node}
+		var tab = {
+			docs_bottom: 50
+			,editor_top: 50
+			,fullScreen: false
+			,fullHeight: false
+			,node: node
+		}
 		tab.li = document.createElement('li')
-		tab.li.textContent = node.text
+		tab.li.className = 'active'
+		// tab.li.textContent = node.text
+		$(tab.li).append('<span>'+node.text+'</span><i class="close"></i>')
 		page.Tab.$el.append(tab.li)
 		// event
-		$(tab.li).on('click', function (e) {
-			tab.show()
-		})
 		tab.show = function () {
-			$(tab.li).addClass('active')
+			$(tab.li).addClass('active').show()
 			$('#pkms_tab_' + node.data.id).show()
-			// editor active
 		}
 		tab.hide = function () {
+			$(tab.li).removeClass('active').hide()
+			$('#pkms_tab_' + node.data.id).hide()
+		}
+		tab.inactivate = function () {
 			$(tab.li).removeClass('active')
 			$('#pkms_tab_' + node.data.id).hide()
 		}
+		tab.activate = function () {
+			// other tab to hide
+			if (page.Tab.current == tab) {
+				tab.show()
+				return
+			}
+			page.Tab.current.inactivate()
+			tab.show()
+			page.editor = page.Editor('pkms_editor_' + node.data.id)
+			page.Tab.current = tab
+			page.menu.deselect_all()
+			page.menu.select_node(node.id, true)
+			if (node.data.id !== 'default') {
+			}
+		}
+		tab.close = function () {
+			// change active to other li
+			if ($(tab.li).hasClass('active')) {
+				if ($(tab.li).prev(':not(:hidden)').length > 0){
+					$(tab.li).prev(':not(:hidden)').find('span').click()
+				} else {
+					$(tab.li).next(':not(:hidden)').find('span').click()
+				}
+			}
+			if (node.data.id == 'default') {
+				tab.hide()
+				return
+			}
+			node.data.tabed = false
+			$('#pkms_tab_' + node.data.id).remove()
+			$(tab.li).remove()
+			delete page.tabs[node.data.id]
+			delete page.editors['pkms_editor_' + node.data.id]
+		}
+		$(tab.li).on('click', 'span', tab.activate)
+		$(tab.li).on('click', '.close', tab.close)
 		// state
-		page.Tab.current = tabs[node.id] = tab
+		page.Tab.current = page.tabs[node.data.id] = tab
 		// create tab contents
 		page.Tab.createSection(node)
-	}
-	,activeTab: function (node) {
-		$(current).removeClass('active')
-		active = $(tabs[node.data.id]).addCommand('active')
-		$('#pkms_tab_' + node.data.id).show()
+		tab.$doc = $('#pkms_doc_' + node.data.id)
+		tab.editor = page.Editor('pkms_editor_' + node.data.id)
+		node.data.tabed = true
 	}
 	,createSection: function (node) {
-		var h = '<section class="rst-content" id="pkms_tab_'+ node.id +'">'
-			+ '<div class="docs" tabindex="1"></div>'
-			+ '<div class="editor" id="editor'+ node.id +'"></div>'
+		var h = '<section class="rst-content" id="pkms_tab_'+ node.data.id +'">'
+			+ '<div class="docs" tabindex="1" id="pkms_doc_'+ node.data.id +'"></div>'
+			+ '<div class="editor" id="pkms_editor_'+ node.data.id +'"></div>'
 			+ '</section>'
 		$('#main').append(h)
-		/////////////////
-		// init editor //
-		/////////////////
 	}
 	,close: function (node) {
-		$('#pkms_tab_' + node.id).remove()
-		var li = tabs[node.id].li
-		$(li).remove()
-		delete tabs[node.id]
-		// change active to other li
-		if ($(li).hasClass('active')) {
-			$(li).prev().click()
-		}
+		page.tabs[node.data.id].close()
+	}
+	,activate: function (name) {
+		// page.Tab.current.hide()
+		page.tabs[name].activate()
 	}
 }
 
