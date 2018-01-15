@@ -246,6 +246,7 @@ page.api = {
 						page.Tab.current.$doc.find('.document').css({'padding-right': w})
 					}
 					$(page.Tab.current.editor.container).hide()
+					$(page.Tab.current.li).find('span').text(data.node.text)
 				}).fail(function (e) {
 					page.Tab.current.$doc.html(e.responseText).css('bottom', 0)
 					$(page.Tab.current.editor.container).hide()
@@ -371,11 +372,11 @@ page.op = {
 		// todo get current active tab's docs
 		page.Tab.current.$doc.css({bottom: 0}).focus()
 	}
-	,lowerEditor: function (editor) {
+	,raiseEditor: function (editor) {
 		if (page.Tab.current.docs_bottom < 95) {
 			page.Tab.current.docs_bottom += 5
 			page.Tab.current.editor_top -= 5
-			if (page.base.editor_top <= 5) {
+			if (page.Tab.current.editor_top <= 5) {
 				$(editor.container).css({top: '40px'})
 			} else {
 				$(editor.container).css({top: page.Tab.current.editor_top + '%'})
@@ -384,7 +385,7 @@ page.op = {
 			editor.resize()
 		}
 	}
-	,raiseEditor: function (editor) {
+	,lowerEditor: function (editor) {
 		if (page.Tab.current.docs_bottom > 10) {
 			page.Tab.current.docs_bottom -= 5
 			page.Tab.current.editor_top += 5
@@ -642,11 +643,10 @@ page.event = {
 								,data: JSON.stringify({id: data.node.data.id, pwd: pwd})
 							}).done(function (resp) {
 								if (resp.result == 'ok') {
-									// $('#docs').html(resp.doc).css('bottom', 0)
-									// $('#editor').hide()
 									page.Tab.current.$doc.html(resp.doc).css('bottom', 0)
 									$(page.Tab.current.editor.container).hide()
 									page.Tab.current.node_id = data.node.data.id
+									$(page.Tab.current.li).find('span').text(data.node.text)
 									$(e.target).focus()
 								} else {
 									page.message('permission die')
@@ -951,51 +951,6 @@ page.Editor = function (id) {
 	return _t
 }
 
-$(function () {
-	page.Tab.newTab({text: '', data: {id: 'default'}, id: 0})
-	// page.editor = page.Editor('editor')
-	ace.config.loadModule("ace/keyboard/vim", function(m) {
-		var Vim = require("ace/keyboard/vim")
-		var VimApi = Vim.CodeMirror.Vim
-		for (var i = 0; i < Vim.handler.defaultKeymap.length; i++) {
-			if (Vim.handler.defaultKeymap[i].keys == '<C-[>') {
-				Vim.handler.defaultKeymap.splice(i, 1)
-				i -= 1
-			}
-		}
-		VimApi.defineEx("write", "w", function(cm, input) {
-			cm.ace.execCommand("save")
-		})
-		VimApi.defineEx("quit", "q", function(cm, input) {
-			cm.ace.execCommand("quit")
-		})
-		VimApi.defineEx("wqrite", "wq", function(cm, input) {
-			cm.ace.execCommand("savequit")
-		})
-	})
-	page.base.menu_option.contextmenu = page.base.submenu_option
-	page.menu = $.jstree.create('#menu', page.base.menu_option)
-	page.menu.set_type_all = function (obj, type, a_attr) {
-		var id = obj.data.id
-		var data = Object.values(page.menu._model.data)
-		var i = 0
-		for (; i < data.length; i++) {
-			if (data[i].id == $.jstree.root) {
-				continue
-			}
-			if (id == data[i].data.id) {
-				page.menu.set_type(data[i], type)
-				if (a_attr) {
-					data[i].a_attr.href = a_attr
-					page.menu.get_node(data[i], true).find('a').first().attr('href', a_attr)
-				}
-			}
-		}
-	}
-	page.event.init()
-	page.pwdpanel = new pwdpanel()
-})
-
 page.tabs = {}
 
 page.Tab = {
@@ -1008,7 +963,6 @@ page.Tab = {
 		$('main').prepend(el)
 		return el
 	}())
-	,tabs: {}
 	,current: null
 	,newTab: function (node) {
 		// hide active tab
@@ -1101,4 +1055,47 @@ page.Tab = {
 	}
 }
 
-
+$(function () {
+	page.Tab.newTab({text: '', data: {id: 'default'}, id: 0})
+	// page.editor = page.Editor('editor')
+	ace.config.loadModule("ace/keyboard/vim", function(m) {
+		var Vim = require("ace/keyboard/vim")
+		var VimApi = Vim.CodeMirror.Vim
+		for (var i = 0; i < Vim.handler.defaultKeymap.length; i++) {
+			if (Vim.handler.defaultKeymap[i].keys == '<C-[>') {
+				Vim.handler.defaultKeymap.splice(i, 1)
+				i -= 1
+			}
+		}
+		VimApi.defineEx("write", "w", function(cm, input) {
+			cm.ace.execCommand("save")
+		})
+		VimApi.defineEx("quit", "q", function(cm, input) {
+			cm.ace.execCommand("quit")
+		})
+		VimApi.defineEx("wqrite", "wq", function(cm, input) {
+			cm.ace.execCommand("savequit")
+		})
+	})
+	page.base.menu_option.contextmenu = page.base.submenu_option
+	page.menu = $.jstree.create('#menu', page.base.menu_option)
+	page.menu.set_type_all = function (obj, type, a_attr) {
+		var id = obj.data.id
+		var data = Object.values(page.menu._model.data)
+		var i = 0
+		for (; i < data.length; i++) {
+			if (data[i].id == $.jstree.root) {
+				continue
+			}
+			if (id == data[i].data.id) {
+				page.menu.set_type(data[i], type)
+				if (a_attr) {
+					data[i].a_attr.href = a_attr
+					page.menu.get_node(data[i], true).find('a').first().attr('href', a_attr)
+				}
+			}
+		}
+	}
+	page.event.init()
+	page.pwdpanel = new pwdpanel()
+})
