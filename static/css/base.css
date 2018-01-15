@@ -73,7 +73,19 @@ button.close{
   background: #333;
   left: 0px;;
 }
-.docs {position: fixed;font-size: 13px;top: 45px;overflow: scroll;outline: none;height: auto;width: auto;right: 0;bottom: 0;left: 315px;}
+.docs {
+  position: fixed;
+  font-size: 13px;
+  top: 45px;
+  overflow: scroll;
+  outline: none;
+  height: auto;
+  width: auto;
+  right: 0;
+  bottom: 0;
+  left: 210px;
+}
+
 .editor {
   display: none;
   height: auto;;
@@ -506,16 +518,16 @@ ul.auto-toc {
 
 /* tabs */
 ul.nav-tabs {
-  line-height: 37px;
+  line-height: 31px;
   padding: 0;
-  max-height: 37px;
+  max-height: 31px;
   overflow: hidden;
   list-style-type: none;
   margin: 0;
   display: flex;
-  border-bottom: 6px solid #f7f7f7;
   margin-top: 8px;
   margin-left: 192px;
+  position: absolute;
 }
 ul.nav-tabs > li{
   -moz-border-radius-topleft: 28px 145px;

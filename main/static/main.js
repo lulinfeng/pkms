@@ -616,18 +616,20 @@ page.event = {
 		page.menu.element//.on('changed.jstree', page.api.getDoc)
 		.on('changed.jstree', function (e, data) {
 			if (data.action == 'select_node') {
-				// opened to tab just to active it
-				if (data.node.data.tabed) {
-					page.Tab.activate(data.node.data.id)
-					return
-				}
-				if (data.event && data.event.ctrlKey) {
-					page.Tab.newTab(data.node)
-				} else {
-					page.Tab.activate('default')
-					page.Tab.current.node.id = data.node.id
-					if (data.node.data.id == page.Tab.current.node_id) {
+				if ((data.node.type | 1) == data.node.type) {
+					// opened to tab just to active it
+					if (data.node.data.tabed) {
+						page.Tab.activate(data.node.data.id)
 						return
+					}
+					if (data.event && data.event.ctrlKey) {
+						page.Tab.newTab(data.node)
+					} else {
+						page.Tab.activate('default')
+						page.Tab.current.node.id = data.node.id
+						if (data.node.data.id == page.Tab.current.node_id) {
+							return
+						}
 					}
 				}
 				// pwd 4
