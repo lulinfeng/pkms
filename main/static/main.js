@@ -366,11 +366,7 @@ page.op = {
 		inst.create_node(obj, o, _t, function (node) {inst.edit(node)})
 	}
 	,quitEditor: function (editor) {
-		// $('#editor').hide()
 		editor.container.style.display = 'none'
-		// var sl = page.menu.get_selected()
-		// page.menu.element.find('#'+ sl + '_anchor').click()
-		// todo get current active tab's docs
 		page.Tab.current.$doc.css({bottom: 0}).focus()
 	}
 	,raiseEditor: function (editor) {
@@ -520,9 +516,13 @@ page.event = {
 	,vimReadDoc: function () {
 		$('#main').on('keydown', '.docs', function (e) {
 			switch(e.which) {
-				case 69: // ctrl-e edit doc
+				case 69: // ctrl-e or alt-e to edit the doc
 					e.preventDefault()
-					if (e.ctrlKey) {
+					if (page.Tab.current.node.data.id != 'default') {
+						page.api.editDoc(e, page.Tab.current.node)
+						return
+					}
+					if (e.ctrlKey || e.altKey) {
 						var node_id = page.Tab.current.node_id
 						var data = Object.values(page.menu._model.data)
 

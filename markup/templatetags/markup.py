@@ -91,7 +91,7 @@ def markdown(value, arg=''):
             return mark_safe(force_unicode(markdown.markdown(smart_str(value))))
 
 @register.filter(is_safe=True)
-def restructuredtext(value):
+def restructuredtext(value, idprefix='id'):
     try:
         from docutils.core import publish_parts
     except ImportError:
@@ -100,8 +100,7 @@ def restructuredtext(value):
         return force_unicode(value)
     else:
         docutils_settings = getattr(settings, "RESTRUCTUREDTEXT_FILTER_SETTINGS", {})
+        docutils_settings.update({'id_prefix': idprefix})
+        print (docutils_settings)
         parts = publish_parts(source=smart_str(value), writer_name="html4css1", settings_overrides=docutils_settings)
-        # for i in parts.keys()[:len(parts.keys()) - 1]:
-        #     print i, parts[i]
-        # print parts.keys()
         return mark_safe(force_unicode(parts['html_body']))

@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import os
+import re
 import time
 import six
 import json
@@ -19,6 +20,9 @@ from django.core.files.storage import default_storage
 from django.conf import settings
 from markup.templatetags.markup import restructuredtext as rst, markdown
 from main.models import DocModel, SortedCatlogModel
+
+
+R = re.compile(r'\s*?\.\. id_prefix:\s*(\w+)')
 
 
 def _loads(data):
@@ -143,7 +147,11 @@ class MenuTree(View):
         if (d.doctype | 4 == d.doctype) and d.pwd != data.get('pwd', ''):
             return JsonResponse({'result': 'fail', 'msg': 'permission die'})
         if d.source_type == 'rst' or d.doctype | 2 == d.doctype:
-            html = rst(d.content)
+            r = R.search(d.content)
+            if r is not None:
+                html = rst(d.content, r.groups()[0])
+            else:
+                html = rst(d.content)
         else:
             html = markdown(d.content)
         if source is True:
