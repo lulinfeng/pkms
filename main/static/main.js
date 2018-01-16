@@ -245,6 +245,7 @@ page.api = {
 						var w = page.Tab.current.$doc.find('.topic')[0].clientWidth
 						page.Tab.current.$doc.find('.document').css({'padding-right': w})
 					}
+					page.Tab.current.node_id = data.node.data.id
 					$(page.Tab.current.editor.container).hide()
 					$(page.Tab.current.li).find('span').text(data.node.text)
 				}).fail(function (e) {
