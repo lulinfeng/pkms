@@ -101,6 +101,5 @@ def restructuredtext(value, idprefix='id'):
     else:
         docutils_settings = getattr(settings, "RESTRUCTUREDTEXT_FILTER_SETTINGS", {})
         docutils_settings.update({'id_prefix': idprefix})
-        print (docutils_settings)
         parts = publish_parts(source=smart_str(value), writer_name="html4css1", settings_overrides=docutils_settings)
         return mark_safe(force_unicode(parts['html_body']))

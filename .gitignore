@@ -1,5 +1,6 @@
 static/admin/
 public_static/
+staticpage/
 media/
 *.sqlite3
 *.pyc

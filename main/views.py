@@ -385,6 +385,18 @@ def static_folder(d):
 
 
 def static_doc(d):
+    tmp = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>%s</title>
+</head>
+<body>
+    %s
+</body>
+</html>
+'''
     if d.doctype | 2 == d.doctype:
         content = static_folder(d)
     else:
@@ -397,7 +409,7 @@ def static_doc(d):
         filename = generate_filename(d.pk)
         path = os.path.join(settings.STATIC_PAGE, filename)
         with codecs.open(path, 'w', encoding='utf8') as f:
-            f.write(content)
+            f.write(tmp % (getattr(d, 'title', 'pkms'), content))
         if d.pk > 0:
             d.staticpage = '/staticpage/%s' % filename
             d.save(update_fields=['status', 'doctype', 'staticpage'])
