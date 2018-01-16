@@ -626,8 +626,8 @@ page.event = {
 					if (data.event && data.event.ctrlKey) {
 						page.Tab.newTab(data.node)
 					} else {
-						page.Tab.activate('default')
 						page.Tab.current.node.id = data.node.id
+						page.Tab.activate('default')
 						if (data.node.data.id == page.Tab.current.node_id) {
 							return
 						}
@@ -1007,8 +1007,6 @@ page.Tab = {
 			page.Tab.current = tab
 			page.menu.deselect_all()
 			page.menu.select_node(node.id, true)
-			if (node.data.id !== 'default') {
-			}
 		}
 		tab.close = function () {
 			// change active to other li
@@ -1028,6 +1026,10 @@ page.Tab = {
 			$(tab.li).remove()
 			delete page.tabs[node.data.id]
 			delete page.editors['pkms_editor_' + node.data.id]
+			// tabs ul remain one children, is the default tab that hided.
+			if (page.Tab.$el.children().length == 1) {
+				page.Tab.current = page.tabs.default
+			}
 		}
 		$(tab.li).on('click', 'span', tab.activate)
 		$(tab.li).on('click', '.close', tab.close)
