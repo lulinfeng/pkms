@@ -1038,6 +1038,7 @@ page.Tab = {
 		$(tab.li).on('click', 'span', tab.activate)
 		$(tab.li).on('click', '.close', tab.close)
 		// state
+		tab.node_id = node.data.id
 		page.Tab.current = page.tabs[node.data.id] = tab
 		// create tab contents
 		page.Tab.createSection(node)
