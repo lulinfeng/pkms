@@ -197,14 +197,17 @@ page.api = {
 		})
 	}
 	,saveDoc: function (editor) {
-		var pk = page.menu.get_selected(true)[0].data.id
 		return $.ajax({
 			type: 'put',
 			url: '/menu/',
-			data: JSON.stringify({'id': pk, content: editor.getValue()})
+			data: JSON.stringify({'id': page.Tab.current.node_id, content: editor.getValue()})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.Tab.current.$doc.html(resp.doc)
+				if (page.Tab.current.$doc.has('.topic').length) {
+					var w = page.Tab.current.$doc.find('.topic')[0].clientWidth
+					page.Tab.current.$doc.find('.document').css({'padding-right': w})
+				}
 			} else {
 				alert('保存失败: ' + resp.msg)
 			}
@@ -924,8 +927,8 @@ page.Editor = function (id) {
 	})
 	_t.commands.addCommand({name: 'quit', bindKey: 'ctrl-q', exec: page.op.quitEditor })
 	_t.commands.addCommand({name: 'savequit', exec: page.api.saveDocQuitEditor })
-	_t.commands.addCommand({name: 'raise', bindKey: 'Ctrl-J', exec: page.op.raiseEditor})
-	_t.commands.addCommand({name: 'lower', bindKey: 'Ctrl-K', exec: page.op.lowerEditor})
+	_t.commands.addCommand({name: 'raise', bindKey: 'Ctrl-K', exec: page.op.raiseEditor})
+	_t.commands.addCommand({name: 'lower', bindKey: 'Ctrl-J', exec: page.op.lowerEditor})
 	_t.commands.addCommand({name: "Toggle Fullscreen", bindKey: "F11",
 		exec: page.op.fullScreenEditor
 	})
