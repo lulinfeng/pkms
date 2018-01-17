@@ -401,7 +401,11 @@ def static_doc(d):
         content = static_folder(d)
     else:
         if d.source_type == 'rst':
-            content = rst(d.content)
+            r = R.search(d.content)
+            if r is not None:
+                content = rst(d.content, r.groups()[0])
+            else:
+                content = rst(d.content)
         else:
             content = markdown(d.content)
     unpublish = d.doctype | 8 == d.doctype or d.doctype | 4 == d.doctype
