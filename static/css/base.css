@@ -546,7 +546,7 @@ ul.nav-tabs > li{
   max-width: 200px;
   min-width: 20px;
   text-decoration: none;
-  padding: 3px 7px;
+  padding: 0px 7px;
   display: block;
   margin: 5px -14px 0;
   background: #171814;
@@ -561,8 +561,8 @@ ul.nav-tabs > li:last-of-type {
 }
 
 ul.nav-tabs > li > span {
-  height: 24px;
-  line-height: 24px;
+  height: 28px;
+  line-height: 28px;
   display: inline-block;
   padding: 0 40px 0 30px;
   width: 100%;
