@@ -68,11 +68,11 @@ button.close{
   overflow: auto;
   width: 200px;
   position: fixed;
-  top: 39px;
+  top: 40px;
   bottom: 0px;
   background: #333;
   left: 0px;
-  padding: 0;
+  padding: 0 0 24px 0;
 }
 .docs {
   position: fixed;
