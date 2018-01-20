@@ -200,7 +200,7 @@ page.api = {
 		return $.ajax({
 			type: 'put',
 			url: '/menu/',
-			data: JSON.stringify({'id': page.Tab.current.node_id, content: editor.getValue()})
+			data: JSON.stringify({'id': page.Tab.current.node.data.id, content: editor.getValue()})
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.Tab.current.$doc.html(resp.doc)
@@ -223,7 +223,7 @@ page.api = {
 					data: JSON.stringify(data.node.data)
 				}).done(function (resp) {
 					if (resp.result == 'ok') {
-						page.Tab.current.node_id = data.node.data.id
+						// page.Tab.current.node_id = data.node.data.id
 						page.Tab.current.$doc.html(resp.doc).css('bottom', 0)
 						if (page.Tab.current.$doc.has('.topic').length) {
 							var w = page.Tab.current.$doc.find('.topic')[0].clientWidth
@@ -248,7 +248,7 @@ page.api = {
 						var w = page.Tab.current.$doc.find('.topic')[0].clientWidth
 						page.Tab.current.$doc.find('.document').css({'padding-right': w})
 					}
-					page.Tab.current.node_id = data.node.data.id
+					// page.Tab.current.node_id = data.node.data.id
 					$(page.Tab.current.editor.container).hide()
 					$(page.Tab.current.li).find('span').text(data.node.text)
 				}).fail(function (e) {
@@ -521,25 +521,28 @@ page.event = {
 			switch(e.which) {
 				case 69: // ctrl-e or alt-e to edit the doc
 					e.preventDefault()
-					if (page.Tab.current.node.data.id != 'default') {
-						page.api.editDoc(e, page.Tab.current.node)
-						return
-					}
 					if (e.ctrlKey || e.altKey) {
-						var node_id = page.Tab.current.node_id
-						var data = Object.values(page.menu._model.data)
-
-						var i = 0
-						for (; i < data.length; i++) {
-							if (data[i].id == $.jstree.root) {
-								continue
-							}
-							if (node_id == data[i].data.id) {
-								page.api.editDoc(e, data[i])
-								return
-							}
-						}
+						page.api.editDoc(e, page.Tab.current.node)
 					}
+					// if (page.Tab.current.node.data.id != 'default') {
+					// 	page.api.editDoc(e, page.Tab.current.node)
+					// 	return
+					// }
+					// if (e.ctrlKey || e.altKey) {
+					// 	var node_id = page.Tab.current.node_id
+					// 	var data = Object.values(page.menu._model.data)
+
+					// 	var i = 0
+					// 	for (; i < data.length; i++) {
+					// 		if (data[i].id == $.jstree.root) {
+					// 			continue
+					// 		}
+					// 		if (node_id == data[i].data.id) {
+					// 			page.api.editDoc(e, data[i])
+					// 			return
+					// 		}
+					// 	}
+					// }
 					break
 				case 71: // home g end G
 					e.preventDefault()
@@ -630,11 +633,14 @@ page.event = {
 					if (data.event && data.event.ctrlKey) {
 						page.Tab.newTab(data.node)
 					} else {
-						page.Tab.current.node.id = data.node.id
 						page.Tab.activate('default')
-						if (data.node.data.id == page.Tab.current.node_id) {
+						// when the default tab is activated,
+						// a node can be found by the defaulttab.node.id
+						// page.Tab.current.node.id = data.node.id
+						if (data.node.id == page.Tab.current.node.id) {
 							return
 						}
+						page.Tab.current.node = data.node
 					}
 				}
 				// pwd 4
@@ -649,7 +655,7 @@ page.event = {
 								if (resp.result == 'ok') {
 									page.Tab.current.$doc.html(resp.doc).css('bottom', 0)
 									$(page.Tab.current.editor.container).hide()
-									page.Tab.current.node_id = data.node.data.id
+									// page.Tab.current.node_id = data.node.data.id
 									$(page.Tab.current.li).find('span').text(data.node.text)
 									$(e.target).focus()
 								} else {
@@ -980,6 +986,7 @@ page.Tab = {
 			,fullScreen: false
 			,fullHeight: false
 			,node: node
+			,is_default: !node.id
 		}
 		tab.li = document.createElement('li')
 		tab.li.className = 'active'
@@ -1010,7 +1017,7 @@ page.Tab = {
 			page.editor = page.Editor('pkms_editor_' + node.data.id)
 			page.Tab.current = tab
 			page.menu.deselect_all()
-			page.menu.select_node(node.id, true)
+			page.menu.select_node(tab.node.id, true)
 		}
 		tab.close = function () {
 			// change active to other li
@@ -1021,7 +1028,7 @@ page.Tab = {
 					$(tab.li).next(':not(:hidden)').find('span').click()
 				}
 			}
-			if (node.data.id == 'default') {
+			if (tab.is_default) {
 				tab.hide()
 				return
 			}
@@ -1038,7 +1045,7 @@ page.Tab = {
 		$(tab.li).on('click', 'span', tab.activate)
 		$(tab.li).on('click', '.close', tab.close)
 		// state
-		tab.node_id = node.data.id
+		// tab.node_id = node.data.id
 		page.Tab.current = page.tabs[node.data.id] = tab
 		// create tab contents
 		page.Tab.createSection(node)
@@ -1048,8 +1055,10 @@ page.Tab = {
 	}
 	,createSection: function (node) {
 		var h = '<section class="rst-content" id="pkms_tab_'+ node.data.id +'">'
-			+ '<div class="docs" tabindex="1" id="pkms_doc_'+ node.data.id +'"></div>'
-			+ '<div class="editor" id="pkms_editor_'+ node.data.id +'"></div>'
+			+ '<div class="docs" tabindex="1" id="pkms_doc_'+ node.data.id +'"'
+			+ ' style="left:'+ (page.base.L_R_pos + 10) +'px"></div>'
+			+ '<div class="editor" id="pkms_editor_'+ node.data.id +'"'
+			+ ' style="left:'+ page.base.L_R_pos +'px"></div>'
 			+ '</section>'
 		$('#main').append(h)
 	}
