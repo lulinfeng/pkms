@@ -397,6 +397,36 @@ def static_doc(d):
 </body>
 </html>
 '''
+    tmp_public = u'''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="/static/css/themes/theme.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <title>%s</title>
+    <style>
+    .docs{left:10px}
+    ::-webkit-scrollbar {
+      width: 15px;
+      height: 8px;
+    }
+    </style>
+</head>
+<body>
+    <header>
+        <div id="header">
+            <div style="float:left;margin-left:10px;">好好学习：个人知识管理精进指南
+                <a href="/">主页</a>
+            </div>
+        </div>
+    </header>
+    <section class="rst-content">
+    <div class="docs">%s</div>
+    </section>
+</body>
+</html>
+'''
     if d.doctype | 2 == d.doctype:
         content = static_folder(d)
     else:
@@ -414,6 +444,9 @@ def static_doc(d):
         path = os.path.join(settings.STATIC_PAGE, filename)
         with codecs.open(path, 'w', encoding='utf8') as f:
             f.write(tmp % (getattr(d, 'title', 'pkms'), content))
+        path = os.path.join(settings.PUBLIC_PAGE, filename)
+        with codecs.open(path, 'w', encoding='utf8') as f:
+            f.write(tmp_public % (getattr(d, 'title', 'pkms'), content))
         if d.pk > 0:
             d.staticpage = '/staticpage/%s' % filename
             d.save(update_fields=['status', 'doctype', 'staticpage'])
@@ -422,9 +455,9 @@ def static_doc(d):
 
 def unstatic_doc(d):
     filename = generate_filename(d.pk)
-    path = os.path.join(settings.STATIC_PAGE, filename)
     try:
-        os.remove(path)
+        os.path.join(settings.STATIC_PAGE, filename)
+        os.remove(os.path.join(settings.PUBLIC_PAGE, filename))
     except:
         pass
     if d.pk > 0:

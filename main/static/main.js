@@ -240,7 +240,7 @@ page.api = {
 				// get the static resource
 				$.ajax({
 					type: 'get',
-					url: data.node.a_attr.href,
+					url: data.node.a_attr.href.replace('/public', '/static'),
 					data: JSON.stringify(data.node.data)
 				}).done(function (resp) {
 					page.Tab.current.$doc.html(resp).css('bottom', 0)
