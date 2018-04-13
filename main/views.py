@@ -448,7 +448,7 @@ def static_doc(d):
         with codecs.open(path, 'w', encoding='utf8') as f:
             f.write(tmp_public % (getattr(d, 'title', 'pkms'), content))
         if d.pk > 0:
-            d.staticpage = '/pubicpage/%s' % filename
+            d.staticpage = '/publicpage/%s' % filename
             d.save(update_fields=['status', 'doctype', 'staticpage'])
     return content
 
