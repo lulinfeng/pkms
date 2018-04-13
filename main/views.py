@@ -351,7 +351,7 @@ def publish_doc(request):
     static_doc(d)
     # static all parent
     static_parent_folder(d)
-    return JsonResponse({'result': 'ok', 'data': '/staticpage/%s' % generate_filename(pk)})
+    return JsonResponse({'result': 'ok', 'data': '/publicpage/%s' % generate_filename(pk)})
 
 
 def unpublish_doc(request):
@@ -448,7 +448,7 @@ def static_doc(d):
         with codecs.open(path, 'w', encoding='utf8') as f:
             f.write(tmp_public % (getattr(d, 'title', 'pkms'), content))
         if d.pk > 0:
-            d.staticpage = '/staticpage/%s' % filename
+            d.staticpage = '/pubicpage/%s' % filename
             d.save(update_fields=['status', 'doctype', 'staticpage'])
     return content
 
