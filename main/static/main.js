@@ -30,7 +30,7 @@
 				6 : {'icon' : 'jstree-pwdfolder' },
 				14 : {'icon' : 'jstree-unpub-pwdfolder' },
 			},
-			'plugins' : ['state','dnd','types','contextmenu', 'themes']
+			'plugins' : ['state','dnd','types','contextmenu', 'themes', 'search']
 		}
 		// contextmenu
 		,submenu_option : {
@@ -241,7 +241,7 @@ page.api = {
 				$.ajax({
 					type: 'get',
 					url: data.node.a_attr.href.replace('/public', '/static'),
-					data: JSON.stringify(data.node.data)
+					data: Date.parse(new Date()) + ''
 				}).done(function (resp) {
 					page.Tab.current.$doc.html(resp).css('bottom', 0)
 					if (page.Tab.current.$doc.has('.topic').length) {
@@ -753,6 +753,10 @@ page.event = {
 		page.menu.settings.core.keyboard.d = function (e) {
 			this.show_contextmenu(e.currentTarget, e.pageX, e.pageY, e);
 		}
+		page.menu.settings.core.keyboard['ctrl-f'] = function (e) {
+			$('#search').show().find('input').focus()
+			return false
+		}
 	}
 	,submenuOperation: function () {
 		$('body').on('keydown', '.vakata-context', page.op.vimOpSubmenu)
@@ -825,6 +829,13 @@ page.event = {
 		this.submenuOperation()
 		this.leftRightWidth()
 		this.selectTab()
+		$('#search').on('keydown', 'input', function (e) {
+			if (e.which == 13) {
+				page.menu.search(e.target.value)
+			} else if (e.which == 27) {
+				$('#search').hide()
+			}
+		})
 	}
 }
 
