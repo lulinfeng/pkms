@@ -18,6 +18,10 @@
 					'url': "/static/modules/jstree/themes/default-dark/style.min.css"
 				}
 			},
+			'search': {
+				'show_only_matches': true,
+				// 'case_sensitive': true
+			},
 			'force_text' : true,
 			'types' : {
 				// file 1, folder 2, pwd 4, unpub 8
@@ -624,7 +628,7 @@ page.event = {
 		page.menu.element//.on('changed.jstree', page.api.getDoc)
 		.on('changed.jstree', function (e, data) {
 			if (data.action == 'select_node') {
-				if ((data.node.type | 1) == data.node.type) {
+				if ((data.node.type & 1) == 1) {
 					// opened to tab just to active it
 					if (data.node.data.tabed) {
 						page.Tab.activate(data.node.data.id)
@@ -644,8 +648,8 @@ page.event = {
 					}
 				}
 				// pwd 4
-				if ((data.node.type | 4) == data.node.type) {
-					if ((data.node.type | 1) == data.node.type) {
+				if ((data.node.type & 4) == 4) {
+					if ((data.node.type & 1) == 1) {
 						page.pwdpanel.show(e, function (pwd) {
 							$.ajax({
 								url: '/menu/'
@@ -829,11 +833,69 @@ page.event = {
 		this.submenuOperation()
 		this.leftRightWidth()
 		this.selectTab()
+		// 目录树搜索事件
 		$('#search').on('keydown', 'input', function (e) {
+			console.log(e.which)
 			if (e.which == 13) {
-				page.menu.search(e.target.value)
+				var query = e.target.value.trim()
+				if (!query) {
+					page.menu.clear_search()
+					return
+				}
+				$.ajax({
+					url: 'menu',
+					type: 'search',
+					data: query
+				}).done(function (data) {
+					if (data.result == 'ok') {
+						var digui = function (folders, ids) {
+							for (var i = 0; i < folders.length; i++) {
+								var node = folders[i]
+								// 只加载目录
+								if (node.type & 2 != 2) {
+									continue
+								}
+								var idx = ids.indexOf(node.data.id)
+								if (idx == -1) {
+									continue
+								}
+								ids.splice(idx, 1)
+								if (node.state.loaded == false) {
+									page.menu.load_node(node, function (obj, status) {
+										if (ids.length == 0) {
+											page.menu.search(query)
+											return
+										}
+										digui(this.get_json(obj).children, ids)
+									})
+								} else {
+									if (ids.length == 0) {
+										page.menu.search(query)
+										return
+									}
+									digui(page.menu.get_json(node).children, ids)
+								}
+							}
+						}
+						digui(page.menu.get_json(), data.ids)
+						setTimeout(function() {
+							// 在未登录的情况下，ids有可能不会为0
+							// 公开的文档放在未公开的目录下，会多出未公开目录的id
+							if (data.ids.length > 0) {
+								console.log(data.ids)
+								page.menu.search(query)
+							}
+						}, 1000);
+					} else {
+						page.message('error', data.msg)
+					}
+				})
 			} else if (e.which == 27) {
 				$('#search').hide()
+				page.menu.get_node(page.menu.get_selected(), true).find('a').first().focus()
+			} else if (e.which == 70 && e.ctrlKey) {
+				e.preventDefault()
+				return false
 			}
 		})
 	}

@@ -61,7 +61,7 @@ class MenuTree(View):
     http_method_names = [
         'get', 'post', 'put', 'delete', 'head', 'options',
         'create', 'getdoc', 'rename', 'movenode', 'setpwd',
-        'copynode',
+        'copynode', 'search'
     ]
 
     def _loads(self, data):
@@ -75,6 +75,36 @@ class MenuTree(View):
             return bytes(str(data), 'utf8')
         else:
             return bytes(data)
+
+    def _get_all_parent(self, parent, result):
+        _p = DocModel.objects.filter(pk__in=parent).values_list('parent', flat=True)
+        _tmp = [j for i in _p for j in json.loads(i)]
+        if 0 in _tmp:
+            return result
+        result.update(_tmp)
+        return self._get_all_parent(_tmp, result)
+
+    def search(self, request, *args, **kwargs):
+        q = request.body.replace('str=', '')
+        # d = DocModel.objects.filter(isdel=False).extra(
+        #     where=['doctype & 2 = 2']).values(
+        #     'id', 'staticpage').annotate(text=F('title'), type=F('doctype'))
+
+        if request.user.is_authenticated:
+            d = DocModel.objects.filter(title__icontains=q, isdel=False).extra(
+                where=['doctype & 6 not in (2,4,6)']).values_list('parent', flat=True)
+        else:
+            d = DocModel.objects.filter(title__icontains=q, isdel=False, status=1).extra(
+                where=['doctype & 6 not in (2,4,6)']).values_list('parent', flat=True)
+
+        parents = set([0])
+        for i in d:
+            parent = json.loads(i)
+            if 0 in parent:
+                continue
+            parents.update(parent)
+            self._get_all_parent(parent, parents)
+        return JsonResponse({'result': 'ok', 'ids': list(parents)}, safe=False)
 
     def get(self, request, *args, **kwargs):
         pk = request.GET.get('id', '#')
