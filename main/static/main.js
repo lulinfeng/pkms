@@ -835,7 +835,6 @@ page.event = {
 		this.selectTab()
 		// 目录树搜索事件
 		$('#search').on('keydown', 'input', function (e) {
-			console.log(e.which)
 			if (e.which == 13) {
 				var query = e.target.value.trim()
 				if (!query) {
