@@ -884,7 +884,7 @@ page.event = {
 								console.log(data.ids)
 								page.menu.search(query)
 							}
-						}, 1000);
+						}, 2000);
 					} else {
 						page.message('error', data.msg)
 					}

@@ -85,7 +85,7 @@ class MenuTree(View):
         return self._get_all_parent(_tmp, result)
 
     def search(self, request, *args, **kwargs):
-        q = request.body.replace(b'str=', b'')
+        q = request.body.decode('utf-8').replace('str=', '')
         # d = DocModel.objects.filter(isdel=False).extra(
         #     where=['doctype & 2 = 2']).values(
         #     'id', 'staticpage').annotate(text=F('title'), type=F('doctype'))
