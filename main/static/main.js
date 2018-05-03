@@ -891,7 +891,8 @@ page.event = {
 				})
 			} else if (e.which == 27) {
 				$('#search').hide()
-				page.menu.get_node(page.menu.get_selected(), true).find('a').first().focus()
+				var top_node = page.menu.get_node('#').children[0]
+				page.menu.get_node(top_node, true).find('a').first().focus()
 			} else if (e.which == 70 && e.ctrlKey) {
 				e.preventDefault()
 				return false
