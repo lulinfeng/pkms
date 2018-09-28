@@ -129,14 +129,15 @@ class MenuTree(View):
         _children_list = SortedCatlogModel.objects.values_list('children', flat=True).get(folder=pk)
         children_list = self._loads(_children_list)
         orderby = Case(*[When(pk=k, then=pos) for pos, k in enumerate(children_list)])
+
         if request.user.is_authenticated:
             # all doc
             r = DocModel.objects.filter(pk__in=children_list, isdel=False).values(
-                'id', 'staticpage').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
+                'id', 'staticpage').annotate(text=F('title'), type=F('doctype'), count=F('mulcount')).order_by(orderby)
         else:
             # published doc
             r = DocModel.objects.filter(pk__in=children_list, isdel=False, status=1).values(
-                'id', 'staticpage').annotate(text=F('title'), type=F('doctype')).order_by(orderby)
+                'id', 'staticpage').annotate(text=F('title'), type=F('doctype'), count=F('mulcount')).order_by(orderby)
         # r = [{"id":1,"text":"Root node","children":[
         #     {"id":2,"text":"Child node 1","children":True},
         #     {"id":3,"text":"Child node 2"}
@@ -232,7 +233,8 @@ class MenuTree(View):
             unstatic_doc(doc)
         else:
             doc.parent = str(parents)
-        doc.save(update_fields=['isdel', 'parent'])
+        doc.mulcount = len(parents)
+        doc.save(update_fields=['isdel', 'parent', 'mulcount'])
         # delete form catalog
         s = SortedCatlogModel.objects.get(folder=parent)
         ch = self._loads(s.children)
@@ -325,7 +327,8 @@ class MenuTree(View):
 
         doc_parents.append(target_pk)
         doc.parent = str(doc_parents)
-        doc.save(update_fields=['parent'])
+        doc.mulcount = len(doc_parents)
+        doc.save(update_fields=['parent', 'mulcount'])
 
         target_folder = SortedCatlogModel.objects.get(folder=target_pk)
         target_folder.children = self._loads(target_folder.children)
@@ -341,7 +344,7 @@ class MenuTree(View):
                 p = DocModel.objects.get(pk=target_pk)
             static_doc(p)
 
-        return JsonResponse({'result': 'ok', 'msg': ''})
+        return JsonResponse({'result': 'ok', 'msg': '', 'count': doc.mulcount})
 
 
 def upload_file(request):

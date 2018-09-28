@@ -42,6 +42,8 @@ class DocModel(models.Model):
 	doctype = models.IntegerField(default=1)
 	# source_type: ''|'rst'|'md'
 	source_type = models.CharField(max_length=20, default='', blank=True)
+	# multiple count is count parents, more than 1 to show multiple tip.
+	mulcount = models.SmallIntegerField(default=1)
 	tag = models.CharField(max_length=20, default='', blank=True)
 	# node password
 	pwd = models.CharField(max_length=20, default='', blank=True)

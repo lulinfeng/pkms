@@ -34,7 +34,7 @@
 				6 : {'icon' : 'jstree-pwdfolder' },
 				14 : {'icon' : 'jstree-unpub-pwdfolder' },
 			},
-			'plugins' : ['state','dnd','types','contextmenu', 'themes', 'search']
+			'plugins' : ['state','dnd','types','contextmenu', 'themes', 'search', 'tags']
 		}
 		// contextmenu
 		,submenu_option : {
@@ -191,6 +191,24 @@ page.api = {
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				data.node.data = $.extend(true, {}, data.original.data)
+
+				var m, id, i, r, g, b, c;
+				c = resp.count
+				m = data.instance._model.data
+				id = data.node.data.id
+
+				r = 255 * (c % 100) / 100
+				g = 255 * (id % 100) / 100
+				b = 255 * ((c * id) % 100) / 100
+				style = 'background: rgba(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) +',.3)'
+				for (i in m) {
+					if (m.hasOwnProperty(i)) {
+						if (m[i].data && m[i].data.id == id) {
+							obj = data.instance.get_node(i, true)
+							obj.find('a').first().attr('style', style)
+						}
+					}
+				}
 			} else {
 				alert(resp.msg)
 				data.instance.refresh()
