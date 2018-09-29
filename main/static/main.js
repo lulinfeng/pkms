@@ -192,7 +192,7 @@ page.api = {
 			if (resp.result == 'ok') {
 				data.node.data = $.extend(true, {}, data.original.data)
 
-				var m, id, i, r, g, b, c;
+				var m, id, i, r, g, b, c, n=0;
 				c = resp.count
 				m = data.instance._model.data
 				id = data.node.data.id
@@ -201,14 +201,22 @@ page.api = {
 				g = 255 * (id % 100) / 100
 				b = 255 * ((c * id) % 100) / 100
 				style = 'background: rgba(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) +',.3)'
+
 				for (i in m) {
 					if (m.hasOwnProperty(i)) {
 						if (m[i].data && m[i].data.id == id) {
+							n += 1
+							m[i].count = c
+							console.log(m[i])
 							obj = data.instance.get_node(i, true)
 							obj.find('a').first().attr('style', style)
+							if (n == c) {
+								break
+							}
 						}
 					}
 				}
+
 			} else {
 				alert(resp.msg)
 				data.instance.refresh()
@@ -316,6 +324,43 @@ page.api = {
 					data.instance.get_node(prev_dom, true).find('a').first().focus()
 					if (data.node.data.tabed) {
 						page.Tab.close(data.node)
+					}
+
+					// reset multiple node background color on delete
+					var m, id, i, r, g, b, c, n=0;
+					c = resp.count
+					m = data.instance._model.data
+					id = data.node.data.id
+
+					if (c > 1) {
+						r = 255 * (c % 100) / 100
+						g = 255 * (id % 100) / 100
+						b = 255 * ((c * id) % 100) / 100
+						style = 'background: rgba(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) +',.3)'
+						for (i in m) {
+							if (m.hasOwnProperty(i)) {
+								if (m[i].data && m[i].data.id == id) {
+									n += 1
+									m[i].count = c
+									obj = data.instance.get_node(i, true)
+									obj.find('a').first().attr('style', style)
+									if (n == c) {
+										break
+									}
+								}
+							}
+						}
+					} else if (c == 1) {
+						for (i in m) {
+							if (m.hasOwnProperty(i)) {
+								if (m[i].data && m[i].data.id == id) {
+									m[i].count = 1
+									obj = data.instance.get_node(i, true)
+									obj.find('a').first().removeAttr('style')
+									break
+								}
+							}
+						}
 					}
 				} else {
 					alert(resp.msg)

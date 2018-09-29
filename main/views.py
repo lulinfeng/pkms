@@ -251,7 +251,7 @@ class MenuTree(View):
         else:
             p = DocModel.objects.get(pk=parent)
         static_doc(p)
-        return JsonResponse({'result': 'ok', 'msg': ''})
+        return JsonResponse({'result': 'ok', 'msg': '', 'count': doc.mulcount})
 
     def rename(self, request, *args, **kwargs):
         data = json.loads(request.body)
