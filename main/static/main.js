@@ -786,6 +786,20 @@ page.event = {
 			var sl = page.menu.get_selected()
 			page.menu.element.find('#'+ sl + '_anchor').focus()
 		})
+		.on('open_node.jstree', function (e, obj) {
+			var a, tw
+			for (var i = obj.node.children.length - 1; i >= 0; i--) {
+				a = page.menu.get_node(obj.node.children[i], 1).find('a')
+				tw = a.position().left + a.width() + 24
+				if (tw > page.base.L_R_pos) {
+					page.base.L_R_pos = tw
+					$('.menu').width(tw)
+					page.Tab.$el.css({'margin-left': tw - 8})
+					$('.docs').css({left: tw + 10})
+					$('.editor').css({left: tw})
+				}
+			}
+		})
 		page.menu.settings.core.keyboard.h = function (e) {
 			e.preventDefault();
 			if(this.is_open(e.currentTarget)) {
@@ -848,7 +862,7 @@ page.event = {
 					$('.editor').css({left: page.base.L_R_pos})
 					// page.editor.resize()
 				}
-				if (e.which == 188) {
+				else if (e.which == 188) {
 					e.preventDefault()
 					if (page.base.L_R_pos == 0) return
 					page.base.L_R_pos -= 5
