@@ -458,6 +458,11 @@ def static_doc(d):
     <div class="docs">%s</div>
     </section>
 </body>
+<script>
+    if (document.getElementsByClassName('topic').length > 0) {
+        document.getElementsByClassName('document')[0].style['paddingRight'] = '250px'
+    }
+</script>
 </html>
 '''
     if d.doctype | 2 == d.doctype:
