@@ -904,12 +904,27 @@ page.event = {
 			page.Tab.$el.children().find('span')[n].click()
 		})
 	}
+	,sectionCollapse: function () {
+		$('#main').on('click','.document>.section>h1', function(e){
+			e.preventDefault()
+			var h = this.clientHeight + 10
+			var w = $(this).parent()
+			if (w.hasClass('section-collapsed')) {
+				w.height(w.height('auto').height(), w.height(h))
+				w.removeClass('section-collapsed')
+			} else {
+				w.height(w.height()), w.height(h)
+				w.addClass('section-collapsed')
+			}
+		})
+	}
 	,init: function () {
 		this.vimReadDoc()
 		this.menuOperation()
 		this.submenuOperation()
 		this.leftRightWidth()
 		this.selectTab()
+		this.sectionCollapse()
 		// 目录树搜索事件
 		$('#search').on('keydown', 'input', function (e) {
 			if (e.which == 13) {

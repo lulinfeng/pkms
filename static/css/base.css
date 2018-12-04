@@ -683,3 +683,18 @@ ul.nav-tabs > li.active {
   border-radius: 3px 3px 0 0;
   font: bold 16px/33px arial,"Microsoft Yahei",sans-serif;
 }
+
+.rst-content .document>.section {
+  margin-right: 10px;
+  overflow: hidden;
+  -webkit-transition: all .5s ease;
+  -moz-transition: all .5s ease;
+  transition: all .5s ease;
+}
+.rst-content .document>.section>h1 {
+  border-bottom: 1px solid #ccc;
+  cursor: hand;
+}
+.rst-content .document>.section>h1:hover {
+  background: #c9e9fb;
+}
