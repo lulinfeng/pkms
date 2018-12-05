@@ -698,7 +698,16 @@ ul.nav-tabs > li.active {
 .rst-content .document>.section>h1:hover {
   color: #000;
 }
-
+.rst-content .document>.section>h1:hover {
+  color: #000;
+}
+.rst-content .document>.section>h1>a:hover {
+  color: #000;
+}
 .rst-content .document>.section.section-collapsed>h1 {
   border-bottom-color: #000;
+}
+.section-collapsed .section{
+  /* disable the child sections anchor, if use content tables */
+  display: none;
 }

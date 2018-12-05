@@ -910,8 +910,10 @@ page.event = {
 			var h = this.clientHeight + 10
 			var w = $(this).parent()
 			if (w.hasClass('section-collapsed')) {
-				w.height(w.height('auto').height(), w.height(h))
+				// section-collapseds child section display is none in css,
+				// calcutate height after removing the css 'section-collapsed'
 				w.removeClass('section-collapsed')
+				w.height(w.height('auto').height(), w.height(h))
 			} else {
 				w.height(w.height()), w.height(h)
 				w.addClass('section-collapsed')
