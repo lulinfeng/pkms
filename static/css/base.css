@@ -696,5 +696,9 @@ ul.nav-tabs > li.active {
   cursor: hand;
 }
 .rst-content .document>.section>h1:hover {
-  background: #c9e9fb;
+  color: #000;
+}
+
+.rst-content .document>.section.section-collapsed>h1 {
+  border-bottom-color: #000;
 }
