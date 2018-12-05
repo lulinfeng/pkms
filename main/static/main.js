@@ -789,8 +789,11 @@ page.event = {
 		.on('open_node.jstree', function (e, obj) {
 			var a, tw
 			for (var i = obj.node.children.length - 1; i >= 0; i--) {
-				a = page.menu.get_node(obj.node.children[i], 1).find('a')
-				tw = a.position().left + a.width() + 24
+				// a = page.menu.get_node(obj.node.children[i], 1).find('a')
+				// tw = a.position().left + a.width() + 24
+				tw = $('.menu').width('auto').width() + 15
+				$('.menu').width(page.base.L_R_pos)
+
 				if (tw > page.base.L_R_pos) {
 					page.base.L_R_pos = tw
 					$('.menu').width(tw)
@@ -798,6 +801,20 @@ page.event = {
 					$('.docs').css({left: tw + 10})
 					$('.editor').css({left: tw})
 				}
+			}
+		})
+		.on('after_close.jstree', function (e, obj) {
+			var tw = $('.menu').width('auto').width() + 15
+			if (tw < 200) {
+				tw = 200
+			}
+			$('.menu').width(page.base.L_R_pos)
+			if (tw < page.base.L_R_pos) {
+				page.base.L_R_pos = tw
+				$('.menu').width(tw)
+				page.Tab.$el.css({'margin-left': tw - 8})
+				$('.docs').css({left: tw + 10})
+				$('.editor').css({left: tw})
 			}
 		})
 		page.menu.settings.core.keyboard.h = function (e) {
