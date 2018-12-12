@@ -98,6 +98,10 @@
 	window.page = page
 })(window.page || {})
 
+
+page.Parser = new (require('html2rst'))
+
+
 page.api = {
 	addMenu: function (pos, data) {
 		$.ajax({
@@ -1141,6 +1145,23 @@ page.Editor = function (id) {
 	_t.commands.addCommand({name: 'docDecrease', bindKey: 'Alt-Shift--', exec: function (editor) {
 		page.op.decreaseDoc(page.Tab.current.$doc[0])
 	}})
+	_t.onPaste = function (text, event) {
+		var items = event.clipboardData.items;
+		if (items) {
+			for (var i = 0; i < items.length; i++) {
+				if (items[i].type.indexOf("html") !== -1) {
+					var htmlstr = event.clipboardData.getData(items[i].type);
+					var rst_data = page.Parser.parse(htmlstr);
+					var pos = this.getCursorPosition();
+					this.session.insert(pos, rst_data)
+					this.focus()
+					return
+				}
+			}
+		var e = {text: text, event: event}
+		this.commands.exec("paste", this, e)
+		}
+	}
 	page.editors[id] = _t
 	return _t
 }
