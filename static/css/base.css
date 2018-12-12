@@ -692,7 +692,7 @@ ul.nav-tabs > li.active {
   transition: all .5s ease;
 }
 .rst-content .document>.section>h1 {
-  cursor: hand;
+  cursor: pointer;
   display: inline-block;
   border-bottom: 1px solid #dadada;
 }

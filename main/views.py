@@ -458,10 +458,23 @@ def static_doc(d):
     <div class="docs">%s</div>
     </section>
 </body>
+<script src="/static/modules/jquery-1.11.2.min.js"></script>
 <script>
     if (document.getElementsByClassName('topic').length > 0) {
         document.getElementsByClassName('document')[0].style['paddingRight'] = '250px'
     }
+    $('.document').on('click','.section>h1', function(e){
+        e.preventDefault()
+        var h = this.clientHeight + 10
+        var w = $(this).parent()
+        if (w.hasClass('section-collapsed')) {
+            w.removeClass('section-collapsed')
+            w.height(w.height('auto').height(), w.height(h))
+        } else {
+            w.height(w.height()), w.height(h)
+            w.addClass('section-collapsed')
+        }
+    })
 </script>
 </html>
 '''
