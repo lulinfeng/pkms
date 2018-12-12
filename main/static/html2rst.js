@@ -50,7 +50,7 @@ Parser.prototype = {
           break
         } else {
           // 自封闭标签， close it
-          handle = 'handle_' + ctag + '_end'
+          handle = 'on_' + ctag + '_end'
           if (this[handle]) {
             this[handle](tag)
           }
@@ -58,7 +58,7 @@ Parser.prototype = {
       }
     }
 
-    handle = 'handle_' + tag + '_' + start_end
+    handle = 'on_' + tag + '_' + start_end
     if (this[handle]) {
       this[handle](tag)
     }
@@ -118,20 +118,20 @@ Parser.prototype = {
     }
     return this.result
   },
-  handle_table_start: function (data) {
-    // caption = this.handle_caption(data)
-    this.result += '\n.. csv-table:: '// + caption + '\n'
+  on_table_start: function (data) {
+    // caption = this.on_caption(data)
+    this.result += '\n\n.. csv-table:: '// + caption + '\n'
   },
-  handle_thead_start: function () {
+  on_thead_start: function () {
     this.result += '\n    :header: '
     this.row_data = [];
   },
-  handle_tr_start: function () {
+  on_tr_start: function () {
     this.result += '\n    '
     this.row_data = [];
   },
-  handle_tr_end: function () {
-    this.result += this.row_data.join(',')
+  on_tr_end: function () {
+    this.result += this.row_data.join(', ')
   },
   handle_data: function (data) {
     if (this.codeTag.has(this.lasttag)) {
