@@ -18,7 +18,7 @@ from django.db.models import F, Case, When
 from django.core.files.storage import default_storage
 
 from django.conf import settings
-from markup.templatetags.markup import restructuredtext as rst, markdown
+from markup.templatetags.markup import restructuredtext as rst, mymarkdown
 from main.models import DocModel, SortedCatlogModel
 
 
@@ -184,7 +184,7 @@ class MenuTree(View):
             else:
                 html = rst(d.content)
         else:
-            html = markdown(d.content)
+            html = mymarkdown(d.content)
         if source is True:
             return JsonResponse({'result': 'ok', 'doc': html, 'source': d.content})
         else:
@@ -488,7 +488,7 @@ def static_doc(d):
             else:
                 content = rst(d.content)
         else:
-            content = markdown(d.content)
+            content = mymarkdown(d.content)
     unpublish = d.doctype | 8 == d.doctype or d.doctype | 4 == d.doctype
     if not unpublish:
         filename = generate_filename(d.pk)

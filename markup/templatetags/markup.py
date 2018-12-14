@@ -36,7 +36,7 @@ def textile(value):
         return mark_safe(force_unicode(textile.textile(smart_str(value), encoding='utf-8', output='utf-8')))
 
 @register.filter(is_safe=True)
-def markdown(value, arg=''):
+def mymarkdown(value, arg=''):
     """
     Runs Markdown over a given value, optionally using various
     extensions python-markdown supports.

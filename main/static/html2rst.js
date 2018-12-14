@@ -1,6 +1,6 @@
 
 define('html2rst', function () {
-Parser = function () {
+var Parser = function () {
   this.result = '';
   this.currentTags = [];
   this.lasttag = '';
@@ -8,11 +8,7 @@ Parser = function () {
   this.gtCharacter_re = new RegExp('>', 'g')
   this.commentCloseTag_re = new RegExp('--\s*>', 'g')
   this.openTag_re = new RegExp('<([a-zA-Z][^\t\n\r\f />\x00]*)(?:[\s/]*.*?>)', 'g')
-  this.rowTag = new Set(['td','th'])
   this.codeTag = new Set(['pre', 'code'])
-  this.codeStatus = false
-  // tdor th's contents in tr
-  this.row_data = []
   this.headerTag = {
     'h1': '=',
     'h2': '-',
@@ -22,49 +18,102 @@ Parser = function () {
     'h6': '+',
     'h7': '^',
   };
-  this.blockTag = new Set(['address', 'article', 'aside', 'blockquote',
-    'canvas', 'dd', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure',
-    'footer', 'form', 'header', 'hr', 'li', 'main', 'nav', 'noscript', 'ol',
-    'output', 'p', 'pre', 'section', 'table', 'tfoot', 'ul', 'video', 'caption']);
   this.nothingTag = new Set(['script', 'style', 'noscript'])
+  this.inCodeBlock = false
+  this.needCacheTag = new Set(['p', 'tr', 'table', 'thead', 'h1', 'h1', 'h2', 'h3',
+    'h4', 'h5', 'h6', 'h7', 'pre', 'code', 'div'])
+  // 数据缓存池 用二维数组表示
+  this.cacheList = []
 }
 
 Parser.prototype = {
-  // start and close tag
-  tag_dispash: function (tag, start_end) {
-    var handle, ctag;
-    if (start_end == 'start') {
-      this.currentTags.push(tag)
-      this.lasttag = tag
-      if (this.codeTag.has(tag)) {
-        this.codeStatus = true
-      }
+  byte_length: function (str) {
+    // returns the byte length of an utf8 string
+    var i, code, l = str.length;
+    for (i = str.length - 1; i >= 0; i--) {
+        code = str.charCodeAt(i)
+        if (code > 0x7f && code <= 0x7ff) {
+          l++
+        } else if (code > 0x7ff && code <= 0xffff) {
+          l += 1
+        }
+    }
+    return l
+  },
+  write: function (text) {
+    // handle_data 函数调用，或tag start end 函数调用
+    if (this.cacheList.length) {
+      this.cacheList[this.cacheList.length -1].push(text)
     } else {
+      this.result += text
+    }
+  },
+  // 判断tag行为，开始标签添加缓存，闭合标签处理数据等
+  tag_start_handle: function (tag) {
+    // 如果是需缓存标签
+    if (this.needCacheTag.has(tag)) {
+      this.cacheList.push([])
       if (this.codeTag.has(tag)) {
-        this.codeStatus = false
+        this.inCodeBlock = true
       }
-      // 关闭标签后,最后的tag要取父级的tag,因此,单体tag如<br><hr>等需要立即关闭
-      while (ctag = this.currentTags.pop()) {
-        if (this.lasttag == ctag) {
-          this.lasttag = this.currentTags[this.currentTags.length - 1] || ''
-          break
-        } else {
-          // 自封闭标签， close it
-          handle = 'on_' + ctag + '_end'
-          if (this[handle]) {
-            this[handle](tag)
-          }
+    }
+    var handle = 'on_' + tag + '_start';
+    if (this[handle]) {
+      this[handle]()
+    }
+  },
+  tag_end_handle: function (tag) {
+    var handle, ctag, data = '';
+    // 关闭标签后,最后的tag要取父级的tag,因此,单体tag如<br><hr>等需要立即关闭
+    while (ctag = this.currentTags.pop()) {
+      if (this.lasttag == ctag) {
+        this.lasttag = this.currentTags[this.currentTags.length - 1] || ''
+        break
+      } else {
+        // 自封闭标签， close it
+        handle = 'on_' + ctag + '_end'
+        if (this[handle]) {
+          this[handle]()
         }
       }
     }
 
-    handle = 'on_' + tag + '_' + start_end
+    handle = 'on_' + tag + '_end'
+    // 如果是需缓存标签
+    if (this.needCacheTag.has(tag)) {
+      data = this.cacheList.pop() || []
+      // h1--h7 tag end handle in once
+      if (tag in this.headerTag) {
+        this.on_headertag_end(tag, data)
+      }
+    }
     if (this[handle]) {
-      this[handle](tag)
+      this[handle](data)
+    }
+    // set false after all endtag function handled data
+    if (this.codeTag.has(tag)) {
+      this.inCodeBlock = false
     }
   },
-  parse: function (data) {
+  // start and close tag
+  tag_dispatch: function (tag, start_end) {
+    if (start_end == 'start') {
+      this.currentTags.push(tag)
+      this.lasttag = tag
+      this.tag_start_handle(tag)
+    } else {
+      this.tag_end_handle(tag)
+    }
+  },
+  reset: function() {
     this.result = ''
+    this.currentTags = []
+    this.lasttag = ''
+    this.inCodeBlock = false
+    this.cacheList = []
+  },
+  parse: function (data) {
+    this.reset()
     var i=0, j=0, len=data.length, m, tag;
     while (i < len) {
       // 找html < 标记
@@ -89,7 +138,7 @@ Parser.prototype = {
         m = this.gtCharacter_re.exec(data)
         j = m.index
         tag = data.substring(i + 2, j)
-        this.tag_dispash(tag, 'end')
+        this.tag_dispatch(tag, 'end')
         i = j + 1
       }
       // 正常tag
@@ -97,7 +146,7 @@ Parser.prototype = {
         tag = m[1]
         i = this.openTag_re.lastIndex
         // 处理正常的tag， 否则略过
-        this.tag_dispash(tag, 'start')
+        this.tag_dispatch(tag, 'start')
       }
       else if (data.startsWith('<!--', i)) {
         // comment
@@ -118,42 +167,68 @@ Parser.prototype = {
     }
     return this.result
   },
-  on_table_start: function (data) {
+  on_table_end: function (data) {
     // caption = this.on_caption(data)
-    this.result += '\n\n.. csv-table:: '// + caption + '\n'
+    // this.result += '\n\n.. csv-table:: '// + caption + '\n'
+    // TODO: caption not new line
+    this.write('\n\n.. csv-table:: ' + data.join('') + '\n\n')
   },
-  on_thead_start: function () {
-    this.result += '\n    :header: '
-    this.row_data = [];
+  on_thead_end: function (data) {
+    if (data && data.length > 0) {
+      this.write('\n    :header: ' + data.join(', ').trim())
+    }
   },
-  on_tr_start: function () {
-    this.result += '\n    '
-    this.row_data = [];
+  on_tbody_start: function () {
+    this.write('\n')
   },
-  on_tr_end: function () {
-    this.result += this.row_data.join(', ')
+  on_tr_end: function (data) {
+    this.write('\n    ' + data.join(', '))
+  },
+  on_code_end: function (data) {
+    if (data && data.length > 0) {
+      if (this.inCodeBlock) {
+        this.write('\n\n.. code::\n\n    ' + data.join('') + '\n')
+      } else {
+        this.write(data.join())
+      }
+    }
+  },
+  on_pre_end: function (data) {
+    if (data && data.length > 0) {
+      if (this.inCodeBlock) {
+        this.write('\n\n.. code::\n\n    ' + data.join('') + '\n')
+      } else {
+        this.write(data.join(''))
+      }
+    }
+  },
+  on_div_end: function (data) {
+    if (data && data.length > 0) {
+      this.write('\n' + data.join(''))
+    }
+  },
+  on_headertag_end: function (tag, data) {
+    // h1--h7
+    var text = '\n' + data.join('') + '\n'
+    this.write(text)
+    this.write(this.headerTag[tag].repeat(this.byte_length(text) - 2) + '\n')
+  },
+  on_p_end: function (data) {
+    this.write('\n' + data.join('') + '\n')
   },
   handle_data: function (data) {
-    if (this.codeTag.has(this.lasttag)) {
-      this.result += data
-      return
+    if (this.inCodeBlock) {
+      this.write(data.split('\n').join('\n    '))
     }
-    data = data.trim()
-    if (data == '') {
-      return
-    }
-    if (this.rowTag.has(this.lasttag)) {
-      this.row_data.push(data)
-    } else if (this.lasttag in this.headerTag) {
-      this.result += '\n\n' + data + '\n'
-      this.result += this.headerTag[this.lasttag].repeat(data.length) + '\n'
-    } else if (this.blockTag.has(this.lasttag)) {
-      this.result += data + '\n'
-    } else if (this.nothingTag.has(this.lasttag)) {
+    else if (this.nothingTag.has(this.lasttag)) {
       // nothing happened
     }
     else {
-      this.result += data
+      data = data.trim()
+      if (data == '') {
+        return
+      }
+      this.write(data)
     }
   }
 }
