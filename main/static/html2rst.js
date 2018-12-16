@@ -26,7 +26,8 @@ var Parser = function () {
   // 数据缓存池 用二维数组表示
   this.cacheList = []
   this.startsNewLine_re = new RegExp('^\n*')
-  this.replaceLiIdent_re = new RegExp('([#\-*+]\.? +)', 'g')
+  this.listItem_re = new RegExp('([#\-*+]\\.? +)', 'g')
+  this.trimLineBreak_re = new RegExp('^\n+|\n+$', 'g')
 }
 
 Parser.prototype = {
@@ -308,7 +309,7 @@ Parser.prototype = {
     this.write('\n\n#. ' + data.join('\n#. '))
   },
   on_li_end: function (data) {
-    this.write(data.join('').replace(this.replaceLiIdent_re, '    $1'))
+    this.write(data.join('').replace(this.trimLineBreak_re, '').replace(this.listItem_re, '    $1'))
   },
   handle_data: function (data) {
     if (this.inCodeBlock) {
