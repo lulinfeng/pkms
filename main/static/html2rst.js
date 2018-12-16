@@ -1,14 +1,14 @@
 
 define('html2rst', function () {
 var Parser = function () {
-  this.result = '';
-  this.currentTags = [];
-  this.lasttag = '';
+  this.result = ''
+  this.currentTags = []
+  this.lasttag = ''
   this.ltCharater_re = new RegExp('<', 'g')
   this.gtCharacter_re = new RegExp('>', 'g')
   this.commentCloseTag_re = new RegExp('--\s*>', 'g')
   this.openTag_re = new RegExp('<([a-zA-Z][^\t\n\r\f />\x00]*)(?:[\s/]*.*?>)', 'g')
-  this.codeTag = new Set(['pre', 'code'])
+  this.codeTag = new Set(['pre', 'code', 'blockquote'])
   this.headerTag = {
     'h1': '=',
     'h2': '-',
@@ -21,12 +21,37 @@ var Parser = function () {
   this.nothingTag = new Set(['script', 'style', 'noscript', 'meta', 'title', 'link', 'head'])
   this.inCodeBlock = false
   this.needCacheTag = new Set(['p', 'tr', 'table', 'thead', 'h1', 'h1', 'h2', 'h3',
-    'h4', 'h5', 'h6', 'h7', 'pre', 'code', 'div', 'tt', 'kbd', 'th', 'td'])
+    'h4', 'h5', 'h6', 'h7', 'pre', 'code', 'div', 'tt', 'kbd', 'th', 'td', 'blockquote',
+    'dd', 'ul', 'ol', 'li'])
   // 数据缓存池 用二维数组表示
   this.cacheList = []
+  this.startsNewLine_re = new RegExp('^\n*')
+  this.replaceLiIdent_re = new RegExp('([#\-*+]\.? +)', 'g')
 }
 
 Parser.prototype = {
+  starts_newline_count: function (text) {
+    return this.startsNewLine_re.exec(text)[0].length
+  },
+  ends_newline_count: function () {
+    var text = this.result;
+    if (this.cacheList.length) {
+      var lastCache = this.cacheList[this.cacheList.length -1];
+      if (lastCache.length) {
+        text = lastCache[lastCache.length - 1];
+      }
+    }
+
+    if (text.endsWith('\n\n')) {
+      return 2
+    }
+    else if (text.endsWith('\n')) {
+      return 1
+    }
+    else {
+      return 0
+    }
+  },
   byte_length: function (str) {
     // returns the byte length of an utf8 string
     var i, code, l = str.length;
@@ -201,7 +226,8 @@ Parser.prototype = {
   on_pre_end: function (data) {
     if (data && data.length > 0) {
       if (this.inCodeBlock) {
-        this.write('\n\n.. code::\n\n    ' + data.join('') + '\n')
+        var start = this.ends_newline_count() ? '\n' : '\n\n'
+        this.write(start + '.. code::\n\n    ' + data.join('') + '\n')
       } else {
         this.write(data.join(''))
       }
@@ -212,18 +238,40 @@ Parser.prototype = {
       if (this.inCodeBlock) {
         this.write(data.join(''))
       } else {
-        this.write('\n' + data.join(''))
+        var text = data.join('')
+        if (text.startsWith('\n') || this.ends_newline_count()) {
+          this.write(data.join(''))
+        } else {
+          this.write('\n' + data.join(''))
+        }
       }
     }
   },
   on_headertag_end: function (tag, data) {
     // h1--h7
-    var text = '\n' + data.join('') + '\n'
-    this.write(text)
-    this.write(this.headerTag[tag].repeat(this.byte_length(text) - 2) + '\n')
+    var text = data.join('');
+    if (this.ends_newline_count()) {
+      this.write('\n' + text + '\n')
+    } else {
+      this.write('\n\n' + text + '\n')
+    }
+    this.write(this.headerTag[tag].repeat(this.byte_length(text)) + '\n')
   },
   on_p_end: function (data) {
-    this.write('\n' + data.join('') + '\n')
+    var text = data.join('')
+    if (text.trim() == '') {
+      return
+    }
+    if (this.inCodeBlock) {
+      this.write(data.join(''))
+      return
+    }
+    var n = this.ends_newline_count() + this.starts_newline_count(text)
+    if (n >= 2) {
+      this.write(text + '\n')
+    } else {
+      this.write('\n'.repeat(2 - n) + text + '\n')
+    }
   },
   on_tt_end: function (data) {
     this.write(' ``' + data.join('') + '`` ')
@@ -235,8 +283,32 @@ Parser.prototype = {
     this.write(data.join('').trim().replace(/,/g, '，'))
   },
   on_td_end: function (data) {
-    console.log(data)
     this.write(data.join('').trim().replace(/,/g, '，'))
+  },
+  on_blockquote_end: function (data) {
+    if (!data || data.length == 0) {
+      return
+    }
+    var text = data.join('    ')
+    var n = this.ends_newline_count() + this.starts_newline_count(text)
+    if (n >= 2) {
+      this.write('    ' + text + '\n')
+    } else {
+      this.write('\n'.repeat(2 - n) + '    ' + text + '\n\n')
+    }
+    this.inCodeBlock = false
+  },
+  on_dd_end: function (data) {
+    this.write('\n    ' + data.join(' ').split('\n').join('\n    '))
+  },
+  on_ul_end: function (data) {
+    this.write('\n\n- ' + data.join('\n- '))
+  },
+  on_ol_end: function (data) {
+    this.write('\n\n#. ' + data.join('\n#. '))
+  },
+  on_li_end: function (data) {
+    this.write(data.join('').replace(this.replaceLiIdent_re, '    $1'))
   },
   handle_data: function (data) {
     if (this.inCodeBlock) {
