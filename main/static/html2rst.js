@@ -26,8 +26,7 @@ var Parser = function () {
   // 数据缓存池 用二维数组表示
   this.cacheList = []
   this.startsNewLine_re = new RegExp('^\n*')
-  this.listItem_re = new RegExp('([#\-*+]\\.? +)', 'g')
-  this.trimLineBreak_re = new RegExp('^\n+|\n+$', 'g')
+  this.replaceLiIdent_re = new RegExp('([#\-*+]\.? +)', 'g')
 }
 
 Parser.prototype = {
@@ -281,10 +280,21 @@ Parser.prototype = {
     this.write(' ``' + data.join('') + '`` ')
   },
   on_th_end: function (data) {
-    this.write(data.join('').trim().replace(/,/g, '，'))
+    var d = data.join('').trim()
+    if (d.indexOf(',') != -1) {
+      if (d.indexOf('"') != -1) {
+        this.write('"' + d.replace(/"/g, '""'), + '"')
+      }
+      else{
+        this.write('"' + data + '"')
+      }
+    }
+    else {
+      this.write(d)
+    }
   },
   on_td_end: function (data) {
-    this.write(data.join('').trim().replace(/,/g, '，'))
+    this.on_th_end(data)
   },
   on_blockquote_end: function (data) {
     if (!data || data.length == 0) {
@@ -309,7 +319,21 @@ Parser.prototype = {
     this.write('\n\n#. ' + data.join('\n#. '))
   },
   on_li_end: function (data) {
-    this.write(data.join('').replace(this.trimLineBreak_re, '').replace(this.listItem_re, '    $1'))
+    this.write(data.join('').replace(this.replaceLiIdent_re, '    $1'))
+  },
+  on_br_start: function () {
+    this.write('\n')
+  },
+  on_strong_start: function () {
+    if (this.ends_newline_count() > 0) {
+      this.write('**')
+    } else {
+      this.write(' **')
+    }
+
+  },
+  on_strong_end: function () {
+    this.write('** ')
   },
   handle_data: function (data) {
     if (this.inCodeBlock) {
