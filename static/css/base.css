@@ -757,3 +757,8 @@ ul.nav-tabs > li.active {
   -moz-transform:rotate(135deg);
   transform: rotate(135deg);
 }
+.rst-content div.figure p.caption {
+  font-style: normal;
+  text-align: center;
+  font-weight: bold;
+}

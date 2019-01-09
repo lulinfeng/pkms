@@ -1,0 +1,5 @@
+six
+pygments
+docutils
+markdown
+django
