@@ -22,7 +22,7 @@ from markup.templatetags.markup import restructuredtext as rst, mymarkdown
 from main.models import DocModel, SortedCatlogModel
 
 
-R = re.compile(r'\s*?\.\. id_prefix:\s*(\w+)')
+ID_PREFIX_RE = re.compile(r'\s*?\.\. id_prefix:\s*(\w+)')
 
 
 def _loads(data):
@@ -173,12 +173,13 @@ class MenuTree(View):
     def getdoc(self, request, *args, **kwargs):
         data = json.loads(request.body)
         pk = data['id']
-        source = data.get('source')  # 获取源文件用于编辑
+        # if source is set, return the document source to editor
+        source = data.get('source')
         d = DocModel.objects.get(pk=pk)
         if (d.doctype | 4 == d.doctype) and d.pwd != data.get('pwd', ''):
             return JsonResponse({'result': 'fail', 'msg': 'permission die'})
         if d.source_type == 'rst' or d.doctype | 2 == d.doctype:
-            r = R.search(d.content)
+            r = ID_PREFIX_RE.search(d.content)
             if r is not None:
                 html = rst(d.content, r.groups()[0])
             else:
@@ -186,7 +187,7 @@ class MenuTree(View):
         else:
             html = mymarkdown(d.content)
         if source is True:
-            return JsonResponse({'result': 'ok', 'doc': html, 'source': d.content})
+            return JsonResponse({'result': 'ok', 'source': d.content})
         else:
             return JsonResponse({'result': 'ok', 'doc': html})
 
@@ -482,7 +483,7 @@ def static_doc(d):
         content = static_folder(d)
     else:
         if d.source_type == 'rst':
-            r = R.search(d.content)
+            r = ID_PREFIX_RE.search(d.content)
             if r is not None:
                 content = rst(d.content, r.groups()[0])
             else:

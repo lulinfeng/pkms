@@ -326,8 +326,11 @@ page.api = {
 			}).done(function (resp) {
 				if (resp.result == 'ok') {
 					data.instance.get_node(prev_dom, true).find('a').first().focus()
-					if (data.node.data.tabed) {
+					if (page.tabs.hasOwnProperty(data.node.data.id)) {
 						page.Tab.close(data.node)
+					}
+					else if (data.node.id == page.tabs.default.node.id) {
+						page.tabs.default.close()
 					}
 
 					// reset multiple node background color on delete
@@ -696,21 +699,21 @@ page.event = {
 		.on('changed.jstree', function (e, data) {
 			if (data.action == 'select_node') {
 				if ((data.node.type & 1) == 1) {
-					// opened to tab just to active it
-					if (data.node.data.tabed) {
+					// Opened tab, just activate it
+					if (page.tabs.hasOwnProperty(data.node.data.id)) {
 						page.Tab.activate(data.node.data.id)
 						return
 					}
 					if (data.event && data.event.ctrlKey) {
 						page.Tab.newTab(data.node)
 					} else {
-						page.Tab.activate('default')
 						// when the default tab is activated,
 						// a node can be found by the defaulttab.node.id
 						// page.Tab.current.node.id = data.node.id
 						if (data.node.id == page.Tab.current.node.id) {
 							return
 						}
+						page.Tab.activate('default')
 						page.Tab.current.node = data.node
 					}
 				}
@@ -1225,7 +1228,8 @@ page.Tab = {
 			page.menu.select_node(tab.node.id, true)
 		}
 		tab.close = function () {
-			// change active to other li
+			// destroy this tab
+			// active next or previous tab li
 			if ($(tab.li).hasClass('active')) {
 				if ($(tab.li).prev(':not(:hidden)').length > 0){
 					$(tab.li).prev(':not(:hidden)').find('span').click()
@@ -1237,7 +1241,6 @@ page.Tab = {
 				tab.hide()
 				return
 			}
-			node.data.tabed = false
 			$('#pkms_tab_' + node.data.id).remove()
 			$(tab.li).remove()
 			delete page.tabs[node.data.id]
@@ -1256,7 +1259,6 @@ page.Tab = {
 		page.Tab.createSection(node)
 		tab.$doc = $('#pkms_doc_' + node.data.id)
 		tab.editor = page.Editor('pkms_editor_' + node.data.id)
-		node.data.tabed = true
 	}
 	,createSection: function (node) {
 		var h = '<section class="rst-content" id="pkms_tab_'+ node.data.id +'">'
