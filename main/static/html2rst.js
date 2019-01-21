@@ -52,10 +52,14 @@ Parser.prototype = {
   },
   ends_newline_count: function () {
     var text = this.result;
-    if (this.cacheList.length) {
-      var lastCache = this.cacheList[this.cacheList.length -1];
+    var n;
+    n = this.cacheList.length
+    while (n > 0) {
+      --n
+      lastCache = this.cacheList[n]
       if (lastCache.length) {
-        text = lastCache[lastCache.length - 1];
+        text = lastCache[lastCache.length - 1]
+        break
       }
     }
 
@@ -266,7 +270,7 @@ Parser.prototype = {
   },
   on_headertag_end: function (tag, data) {
     // h1--h7
-    var text = data.join('');
+    var text = data.join('').replace(/\*/g, '');
     if (this.ends_newline_count()) {
       this.write('\n' + text + '\n')
     } else {
@@ -342,6 +346,9 @@ Parser.prototype = {
     this.write('\n')
   },
   on_strong_start: function () {
+    if (this.inCodeBlock) {
+      return
+    }
     if (this.ends_newline_count() > 0) {
       this.write('**')
     } else {
@@ -350,6 +357,9 @@ Parser.prototype = {
 
   },
   on_strong_end: function () {
+    if (this.inCodeBlock) {
+      return
+    }
     this.write('** ')
   },
 
