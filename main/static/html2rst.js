@@ -26,7 +26,7 @@ var Parser = function () {
   // 数据缓存池 用二维数组表示
   this.cacheList = []
   this.startsNewLine_re = new RegExp('^\n*')
-  this.listItem_re = new RegExp('([#\-*+]\\.? +)', 'g')
+  this.listItem_re = new RegExp('([#\-*+] \\.? +)', 'g')
   this.trimLineBreak_re = new RegExp('^\n+|\n+$', 'g')
 
   this.entityref_re = new RegExp('&([a-zA-Z][-.a-zA-Z0-9]*);', 'g')
