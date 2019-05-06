@@ -13,6 +13,7 @@ markup syntaxes to HTML; currently there is support for:
 import six
 import warnings
 
+from docutils.core import publish_parts
 from django import template
 from django.conf import settings
 from django.utils.safestring import mark_safe
@@ -90,16 +91,16 @@ def mymarkdown(value, arg=''):
             warnings.warn(python_markdown_deprecation, DeprecationWarning)
             return mark_safe(force_unicode(markdown.markdown(smart_str(value))))
 
+
 @register.filter(is_safe=True)
 def restructuredtext(value, idprefix='id'):
-    try:
-        from docutils.core import publish_parts
-    except ImportError:
-        if settings.DEBUG:
-            raise template.TemplateSyntaxError("Error in 'restructuredtext' filter: The Python docutils library isn't installed.")
-        return force_unicode(value)
-    else:
-        docutils_settings = getattr(settings, "RESTRUCTUREDTEXT_FILTER_SETTINGS", {})
-        docutils_settings.update({'id_prefix': idprefix})
-        parts = publish_parts(source=smart_str(value), writer_name="html4css1", settings_overrides=docutils_settings)
-        return mark_safe(force_unicode(parts['html_body']))
+    docutils_settings = {
+        'raw_enabled': False,
+        'file_insertion_enabled': False,
+        'tab_width': 2,
+        'id_prefix': idprefix,
+        # 'datestamp': ' %Y-%m-%d %H:%M',
+        # 'language_code': 'zh-hans',
+    }
+    parts = publish_parts(source=smart_str(value), writer_name="html4css1", settings_overrides=docutils_settings)
+    return mark_safe(force_unicode(parts['html_body']))
