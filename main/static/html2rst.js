@@ -340,7 +340,14 @@ Parser.prototype = {
     this.write('\n\n#. ' + data.join('\n#. '))
   },
   on_li_end: function (data) {
-    this.write(data.join('').replace(this.trimLineBreak_re, '').replace(this.listItem_re, '    $1'))
+    // 如果li含有标签信息以外的数据，缩进处理
+    var in_li_data = data.slice(1)
+    data = data[0].replace(this.trimLineBreak_re, '')
+    if (in_li_data.length) {
+      data += in_li_data.join('').replace(/^(.*)$/mg, '    $1')
+    }
+    this.write(data)
+    // this.write(data.join('').replace(this.trimLineBreak_re, '').replace(this.listItem_re, '    $1'))
   },
   on_br_start: function () {
     this.write('\n')
