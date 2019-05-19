@@ -340,6 +340,9 @@ Parser.prototype = {
     this.write('\n\n#. ' + data.join('\n#. '))
   },
   on_li_end: function (data) {
+    if (!data.length) {
+      return
+    }
     // 如果li含有标签信息以外的数据，缩进处理
     var in_li_data = data.slice(1)
     data = data[0].replace(this.trimLineBreak_re, '')
