@@ -550,7 +550,7 @@ page.op = {
 	}
 	,decreaseEditor: function (editor) {
 		var size = editor.getFontSize()
-		if (size == 12) return
+		if (size == 13) return
 		editor.setFontSize(size - 1)
 	}
 	,increaseDoc: function (el) {
@@ -559,7 +559,7 @@ page.op = {
 	}
 	,decreaseDoc: function (el) {
 		var size = parseInt(el.style.fontSize.replace('px', '') || 13)
-		if (size == 12) return
+		if (size == 13) return
 		el.style.fontSize = size - 1
 	}
 }
