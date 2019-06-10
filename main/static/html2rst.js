@@ -7,7 +7,7 @@ var Parser = function () {
   this.ltCharater_re = new RegExp('<', 'g')
   this.gtCharacter_re = new RegExp('>', 'g')
   this.commentCloseTag_re = new RegExp('--\s*>', 'g')
-  this.openTag_re = new RegExp('<([a-zA-Z][^\t\n\r\f />\x00]*)(?:[\s/]*.*?>)', 'g')
+  this.openTag_re = new RegExp('<([a-zA-Z][^\t\n\r\f />\x00]*)([\s/]*.*?)>', 'g')
   this.codeTag = new Set(['pre', 'code', 'blockquote'])
   this.headerTag = {
     'h1': '=',
@@ -22,7 +22,7 @@ var Parser = function () {
   this.inCodeBlock = false
   this.needCacheTag = new Set(['p', 'tr', 'table', 'thead', 'h1', 'h1', 'h2', 'h3',
     'h4', 'h5', 'h6', 'h7', 'pre', 'code', 'div', 'tt', 'kbd', 'th', 'td', 'blockquote',
-    'dd', 'ul', 'ol', 'li'])
+    'dd', 'ul', 'ol', 'li', 'a'])
   // 数据缓存池 用二维数组表示
   this.cacheList = []
   this.startsNewLine_re = new RegExp('^\n*')
@@ -44,6 +44,8 @@ var Parser = function () {
     copy: '©',
     reg: '®'
   }
+  // 临时保存a链接，不会出现a标签嵌套的情况
+  this.a_tag_link = ''
 }
 
 Parser.prototype = {
@@ -95,9 +97,10 @@ Parser.prototype = {
     }
   },
   // 判断tag行为，开始标签添加缓存，闭合标签处理数据等
-  tag_start_handle: function (tag) {
+  tag_start_handle: function (tag, attr) {
     // 如果是需缓存标签
     if (this.needCacheTag.has(tag)) {
+      // [["first tag content", "..."], ["next tag content", "..."], ..., ["current tag cache content", "..."]]
       this.cacheList.push([])
       if (this.codeTag.has(tag)) {
         this.inCodeBlock = true
@@ -105,7 +108,7 @@ Parser.prototype = {
     }
     var handle = 'on_' + tag + '_start';
     if (this[handle]) {
-      this[handle]()
+      this[handle](attr)
     }
   },
   tag_end_handle: function (tag) {
@@ -142,11 +145,11 @@ Parser.prototype = {
     }
   },
   // start and close tag
-  tag_dispatch: function (tag, start_end) {
+  tag_dispatch: function (tag, start_end, attr) {
     if (start_end == 'start') {
       this.currentTags.push(tag)
       this.lasttag = tag
-      this.tag_start_handle(tag)
+      this.tag_start_handle(tag, attr)
     } else {
       this.tag_end_handle(tag)
     }
@@ -160,7 +163,8 @@ Parser.prototype = {
   },
   parse: function (data) {
     this.reset()
-    var i=0, j=0, len=data.length, m, tag;
+    data = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    var i=0, j=0, len=data.length, m, tag, attr;
     while (i < len) {
       // 找html < 标记
       // 有可能跳过实体字符或实体编号 &nbsp; &#160; 有时间再补
@@ -192,7 +196,11 @@ Parser.prototype = {
         tag = m[1]
         i = this.openTag_re.lastIndex
         // 处理正常的tag， 否则略过
-        this.tag_dispatch(tag, 'start')
+        attr = m[2].trim().replace(/'|"/g, '').replace(/ +/g, ' ').split(' ')
+        // var m2o = (amp => {const obj = {}; amp.forEach((v, k) => {obj[k] = v}); return obj })
+        // attr = m2o(new Map(attr.map(x=>x.split('='))))
+        attr = attr.map(x => x.split('='))
+        this.tag_dispatch(tag, 'start', attr)
       }
       else if (data.startsWith('<!--', i)) {
         // comment
@@ -270,7 +278,7 @@ Parser.prototype = {
   },
   on_headertag_end: function (tag, data) {
     // h1--h7
-    var text = data.join('').replace(/\*/g, '');
+    var text = data.join('').replace(/\*/g, '').trim();
     if (this.ends_newline_count()) {
       this.write('\n' + text + '\n')
     } else {
@@ -371,6 +379,32 @@ Parser.prototype = {
       return
     }
     this.write('** ')
+  },
+  on_a_start: function (attr) {
+    for (var i = 0; i < attr.length; i++) {
+      if (attr[i][0] == 'href') {
+        if (attr[i].length > 1) {
+          var href = attr[i][1]
+          var pos = href.indexOf('#')
+          if (pos != -1) {
+            href = href.substr(pos)
+          }
+          this.a_tag_link = href
+          return
+        }
+      }
+    }
+    this.a_tag_link = ''
+  },
+  on_a_end: function (data) {
+    if (this.a_tag_link) {
+      // if data in code tag. 删除 `` 符号
+      data = data.join('').trim().replace(/`/g, '')
+      this.write(' `' + data + ' <' + this.a_tag_link + '>`__ ')
+      this.a_tag_link = ''
+    } else {
+      this.write(data.join(''))
+    }
   },
 
   handle_entityref_data(data) {
