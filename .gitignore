@@ -2,7 +2,8 @@ static/admin/
 public_static/
 staticpage/
 publicpage/
-media/
+media/*
+!media/downloads
 *.sqlite3
 *.pyc
 */migrations/*.py

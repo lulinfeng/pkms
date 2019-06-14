@@ -90,6 +90,19 @@
 						,delete: _tmp.remove
 					}
 				}
+				tmp['export'] = {
+					label: 'Export'
+					,submenu: {
+						pdf: {
+							label: 'Pdf'
+							,action: function (data) {page.api.exportPdf(data)}
+						}
+						,docx: {
+							label: 'Docx'
+							,action: function (data) {page.api.exportDocx(data)}
+						}
+					}
+				}
 				tmp['ccp'] = _tmp.ccp
 				return tmp
 			}
@@ -413,7 +426,7 @@ page.api = {
 				page.menu.get_node(obj, true).find('a').first().focus()
 				page.menu.set_type_all(obj, (obj.type | 8) ^ 8, resp.data)
 			} else {
-				page.message('error' + resp.msg || '')
+				page.message('error:' + resp.msg || '')
 			}
 		})
 	}
@@ -428,7 +441,23 @@ page.api = {
 				page.menu.get_node(obj, true).find('a').first().focus()
 				page.menu.set_type_all(obj, obj.type | 8, '#')
 			} else {
-				page.message('error' + resp.msg || '')
+				page.message('error:' + resp.msg || '')
+			}
+		})
+	}
+	,exportPdf: function (data) {
+		var obj = page.menu.get_node(data.reference)
+		$.ajax({
+			type: 'post'
+			,url: '/exportpdf/'
+			,data: JSON.stringify({id: obj.data.id})
+		}).done(function (resp) {
+			console.log(resp)
+			if (resp.result == 'ok') {
+				page.menu.get_node(obj, true).find('a').first().focus()
+				window.open(resp.data, '_blank')
+			} else {
+				page.message('error:' + resp.msg || '')
 			}
 		})
 	}
@@ -1004,7 +1033,7 @@ page.event = {
 							}
 						}, 2000);
 					} else {
-						page.message('error', data.msg)
+						page.message('error:', data.msg)
 					}
 				})
 			} else if (e.which == 27) {

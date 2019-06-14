@@ -533,6 +533,24 @@ def generate_filename(pk):
     return m.hexdigest()[8:-8]
 
 
+def get_local_font():
+    if settings.LANGUAGE_CODE == 'zh-hans':
+        language_code = 'zh-cn'
+    else:
+        language_code = settings.LANGUAGE_CODE
+    sh = 'fc-list -f "%%{family}\n" :lang=%s' % language_code
+    status, msg = subprocess.getstatusoutput(sh)
+    if status != 0:
+        return JsonResponse({'result': 'failed', 'msg': msg})
+    for font in msg.split('\n'):
+        if ',' in font:
+            for f in font.split(','):
+                if 'Bold' not in f:
+                    return f
+        if 'Bold' not in font:
+            return font
+
+
 def export_pdf(request):
     if not request.user.has_perm('main.doc.export_pdf'):
         return JsonResponse({'result': 'failed', 'msg': 'permission die'})
@@ -545,13 +563,22 @@ def export_pdf(request):
     if d.doctype & 1 != 1:
         return JsonResponse({'result': 'faield', 'msg': 'only doc can be exported'})
 
-    output = '/media/downloads/%s.pdf' % d.title
-    sh = 'pandoc -f rst -s %s -o %s --pdf-engine=xelatex -V CJKmainfont="WenQuanYi Micro Hei Mono" -M geometry:"margin=0.5in" -V fontsize=12pt -V documentclass=extarticle'
+    output = 'media/downloads/%s.pdf' % d.title
+    sh = '''
+        pandoc -f rst -s %s -o %s --pdf-engine=xelatex \
+        -V CJKmainfont="%s" \
+        -M geometry:"margin=0.5in" \
+        -V fontsize=12pt -V documentclass=extarticle
+    '''
     status, msg = 1, 'failed'
+    local_font = get_local_font()
+    if local_font is None:
+        return JsonResponse({'result': 'failed', 'msg': 'not found font of language: %s' % settings.LANGUAGE_CODE})
+
     with tempfile.NamedTemporaryFile(suffix='.rst') as f:
         f.write(d.content.encode())
         f.seek(0)
-        status, msg = subprocess.getstatusoutput(sh % (f.name, output))
+        status, msg = subprocess.getstatusoutput(sh % (f.name, os.path.join(settings.BASE_DIR, output), local_font))
     if status != 0:
         return JsonResponse({'result': 'failed', 'msg': msg})
-    return JsonResponse({'result': 'ok', 'data': output})
+    return JsonResponse({'result': 'ok', 'data': '/' + output})
