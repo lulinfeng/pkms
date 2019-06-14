@@ -8,6 +8,8 @@ import json
 from functools import wraps
 from hashlib import md5
 import codecs
+import tempfile
+import subprocess
 
 from django.utils.decorators import available_attrs, method_decorator
 # from django.contrib.auth.decorators import permission_required
@@ -529,3 +531,27 @@ def generate_filename(pk):
     m = md5(str(pk).encode('utf8'))
     m.update(settings.SECRET_KEY.encode('utf8'))
     return m.hexdigest()[8:-8]
+
+
+def export_pdf(request):
+    if not request.user.has_perm('main.doc.export_pdf'):
+        return JsonResponse({'result': 'failed', 'msg': 'permission die'})
+
+    pk = json.loads(request.body).get('id')
+    try:
+        d = DocModel.objects.get(pk=pk)
+    except DocModel.DoesNotexists:
+        return JsonResponse({'result': 'faield', 'msg': 'doc not found'})
+    if d.doctype & 1 != 1:
+        return JsonResponse({'result': 'faield', 'msg': 'only doc can be exported'})
+
+    output = '/media/downloads/%s.pdf' % d.title
+    sh = 'pandoc -f rst -s %s -o %s --pdf-engine=xelatex -V CJKmainfont="WenQuanYi Micro Hei Mono" -M geometry:"margin=0.5in" -V fontsize=12pt -V documentclass=extarticle'
+    status, msg = 1, 'failed'
+    with tempfile.NamedTemporaryFile(suffix='.rst') as f:
+        f.write(d.content.encode())
+        f.seek(0)
+        status, msg = subprocess.getstatusoutput(sh % (f.name, output))
+    if status != 0:
+        return JsonResponse({'result': 'failed', 'msg': msg})
+    return JsonResponse({'result': 'ok', 'data': output})
