@@ -81,9 +81,9 @@ def mymarkdown(value, arg=''):
             else:
                 if markdown_vers >= (2, 1):
                     if safe_mode:
-                        return mark_safe(markdown.markdown(force_unicode(value), extensions, safe_mode=safe_mode, enable_attributes=False))
+                        return mark_safe(markdown.markdown(force_unicode(value), extensions=extensions, safe_mode=safe_mode, enable_attributes=False))
                     else:
-                        return mark_safe(markdown.markdown(force_unicode(value), extensions, safe_mode=safe_mode))
+                        return mark_safe(markdown.markdown(force_unicode(value), extensions=extensions, safe_mode=safe_mode))
                 else:
                     warnings.warn(python_markdown_deprecation, DeprecationWarning)
                     return mark_safe(markdown.markdown(force_unicode(value), extensions, safe_mode=safe_mode))
