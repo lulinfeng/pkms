@@ -426,7 +426,7 @@ page.api = {
 				page.menu.get_node(obj, true).find('a').first().focus()
 				page.menu.set_type_all(obj, (obj.type | 8) ^ 8, resp.data)
 			} else {
-				page.alert('error:' + resp.msg || '')
+				page.alert('Error', resp.msg || '')
 			}
 		})
 	}
@@ -441,7 +441,7 @@ page.api = {
 				page.menu.get_node(obj, true).find('a').first().focus()
 				page.menu.set_type_all(obj, obj.type | 8, '#')
 			} else {
-				page.alert('error:' + resp.msg || '')
+				page.alert('Error', resp.msg || '')
 			}
 		})
 	}
@@ -456,7 +456,7 @@ page.api = {
 				page.menu.get_node(obj, true).find('a').first().focus()
 				window.open(resp.data, '_blank')
 			} else {
-				page.alert('error:' + resp.msg || '')
+				page.alert('Error', resp.msg || '')
 			}
 		})
 	}
@@ -1032,7 +1032,7 @@ page.event = {
 							}
 						}, 2000);
 					} else {
-						page.alert('error:', data.msg)
+						page.alert('Error', data.msg)
 					}
 				})
 			} else if (e.which == 27) {

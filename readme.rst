@@ -10,6 +10,15 @@ Requirements
 ============
 - Python 2.7+/3.x
 - Django 1.11+
+- pandoc 2.0+
+
+导出pdf和docx功能
+==================
+依赖 `pandoc <https://pandoc.org/installing.html>`__
+
+安装完pandoc后，可能还需要安装以下两个包::
+
+	sudo apt install texlive-xetex fontconfig
 
 Install
 ===========

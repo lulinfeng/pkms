@@ -534,20 +534,20 @@ def generate_filename(pk):
 
 
 def get_local_font():
-    if settings.LANGUAGE_CODE == 'zh-hans':
-        language_code = 'zh-cn'
+    if settings.LANGUAGE_CODE.lower() == 'zh-hans':
+        language_code = 'zh'
     else:
         language_code = settings.LANGUAGE_CODE
     sh = 'fc-list -f "%%{family}\n" :lang=%s' % language_code
     status, msg = subprocess.getstatusoutput(sh)
     if status != 0:
-        return JsonResponse({'result': 'failed', 'msg': msg})
+        return None
     for font in msg.split('\n'):
         if ',' in font:
             for f in font.split(','):
-                if 'Bold' not in f:
+                if 'Bold' not in f and f.strip():
                     return f
-        if 'Bold' not in font:
+        if 'Bold' not in font and font.strip():
             return font
 
 
@@ -578,7 +578,12 @@ def export_pdf(request):
     with tempfile.NamedTemporaryFile(suffix='.rst') as f:
         f.write(d.content.encode())
         f.seek(0)
-        status, msg = subprocess.getstatusoutput(sh % (f.name, os.path.join(settings.BASE_DIR, output), local_font))
+        status, msg = subprocess.getstatusoutput(sh % (
+            f.name,
+            # 路径空白字符
+            '"%s"' % os.path.join(settings.BASE_DIR, output),
+            local_font)
+        )
     if status != 0:
         return JsonResponse({'result': 'failed', 'msg': msg})
     return JsonResponse({'result': 'ok', 'data': '/' + output})
