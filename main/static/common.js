@@ -1,10 +1,10 @@
 window.page = {
 	mask: function (isClear) {
-		var maskLayer = document.getElementById('rui_mask')
+		var maskLayer = document.getElementById('pkms_mask')
 		if (!maskLayer) {
 			maskLayer = document.createElement('div')
-			maskLayer.id = 'rui_mask'
-			maskLayer.className = 'rui-mask'
+			maskLayer.id = 'pkms_mask'
+			maskLayer.className = 'mask'
 			maskLayer.style.display = 'none'
 			document.body.appendChild(maskLayer)
 		}

@@ -558,7 +558,7 @@ def export_pdf(request):
     pk = json.loads(request.body).get('id')
     try:
         d = DocModel.objects.get(pk=pk)
-    except DocModel.DoesNotexists:
+    except DocModel.DoesNotexist:
         return JsonResponse({'result': 'faield', 'msg': 'doc not found'})
     if d.doctype & 1 != 1:
         return JsonResponse({'result': 'faield', 'msg': 'only doc can be exported'})
@@ -584,6 +584,31 @@ def export_pdf(request):
             '"%s"' % os.path.join(settings.BASE_DIR, output),
             local_font)
         )
+    if status != 0:
+        return JsonResponse({'result': 'failed', 'msg': msg})
+    return JsonResponse({'result': 'ok', 'data': '/' + output})
+
+
+def export_docx(request):
+    if not request.user.has_perm('main.doc.export_docx'):
+        return JsonResponse({'result': 'failed', 'msg': 'permission die'})
+
+    pk = json.loads(request.body).get('id')
+    try:
+        d = DocModel.objects.get(pk=pk)
+    except DocModel.DoesNotexist:
+        return JsonResponse({'result': 'faield', 'msg': 'doc not found'})
+    if d.doctype & 1 != 1:
+        return JsonResponse({'result': 'faield', 'msg': 'only doc can be exported'})
+
+    output = 'media/downloads/%s.docx' % d.title
+    sh = 'pandoc -f rst -s %s -o %s'
+    status, msg = 1, 'failed'
+
+    with tempfile.NamedTemporaryFile(suffix='.rst') as f:
+        f.write(d.content.encode())
+        f.seek(0)
+        status, msg = subprocess.getstatusoutput(sh % (f.name, '"%s"' % os.path.join(settings.BASE_DIR, output)))
     if status != 0:
         return JsonResponse({'result': 'failed', 'msg': msg})
     return JsonResponse({'result': 'ok', 'data': '/' + output})

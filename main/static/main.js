@@ -447,6 +447,7 @@ page.api = {
 	}
 	,exportPdf: function (data) {
 		var obj = page.menu.get_node(data.reference)
+		page.mask()
 		$.ajax({
 			type: 'post'
 			,url: '/exportpdf/'
@@ -454,10 +455,30 @@ page.api = {
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.menu.get_node(obj, true).find('a').first().focus()
+				page.message('', 'export success')
 				window.open(resp.data, '_blank')
 			} else {
 				page.alert('Error', resp.msg || '')
 			}
+			page.mask(1)
+		})
+	}
+	,exportDocx: function (data) {
+		var obj = page.menu.get_node(data.reference)
+		page.mask()
+		$.ajax({
+			type: 'post'
+			,url: '/exportdocx/'
+			,data: JSON.stringify({id: obj.data.id})
+		}).done(function (resp) {
+			if (resp.result == 'ok') {
+				page.menu.get_node(obj, true).find('a').first().focus()
+				page.message('export success')
+				window.open(resp.data, '_blank')
+			} else {
+				page.alert('Error', resp.msg || '')
+			}
+			page.mask(1)
 		})
 	}
 }

@@ -20,8 +20,8 @@ body{font:normal 12px/1.5 arial,"Microsoft Yahei",sans-serif;color: #3f3f3f; bac
 /* 提示框 */
 .alert{
   position: absolute;
-  background: rgb(71, 71, 71);
-  color: #ff8300ad;
+  background: rgb(73, 73, 73);
+  color: #d7c0c0bd;
   font-size: 17px;
   top: 20%;
   left: 40%;
@@ -41,6 +41,7 @@ body{font:normal 12px/1.5 arial,"Microsoft Yahei",sans-serif;color: #3f3f3f; bac
   padding: 0 10px;
   word-wrap: break-word;
   word-break: normal;
+  margin: 0 5px 10px 5px;;;
 }
 
 button.close{

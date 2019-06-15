@@ -26,6 +26,7 @@ urlpatterns = [
     url(r'^publish/$', main_view.publish_doc),
     url(r'^unpublish/$', main_view.unpublish_doc),
     url(r'^exportpdf/$', main_view.export_pdf),
+    url(r'^exportdocx/$', main_view.export_docx),
     url(r'^admin/', admin.site.urls),
 ]
 
