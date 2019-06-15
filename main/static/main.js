@@ -426,7 +426,7 @@ page.api = {
 				page.menu.get_node(obj, true).find('a').first().focus()
 				page.menu.set_type_all(obj, (obj.type | 8) ^ 8, resp.data)
 			} else {
-				page.message('error:' + resp.msg || '')
+				page.alert('error:' + resp.msg || '')
 			}
 		})
 	}
@@ -441,7 +441,7 @@ page.api = {
 				page.menu.get_node(obj, true).find('a').first().focus()
 				page.menu.set_type_all(obj, obj.type | 8, '#')
 			} else {
-				page.message('error:' + resp.msg || '')
+				page.alert('error:' + resp.msg || '')
 			}
 		})
 	}
@@ -452,12 +452,11 @@ page.api = {
 			,url: '/exportpdf/'
 			,data: JSON.stringify({id: obj.data.id})
 		}).done(function (resp) {
-			console.log(resp)
 			if (resp.result == 'ok') {
 				page.menu.get_node(obj, true).find('a').first().focus()
 				window.open(resp.data, '_blank')
 			} else {
-				page.message('error:' + resp.msg || '')
+				page.alert('error:' + resp.msg || '')
 			}
 		})
 	}
@@ -1033,7 +1032,7 @@ page.event = {
 							}
 						}, 2000);
 					} else {
-						page.message('error:', data.msg)
+						page.alert('error:', data.msg)
 					}
 				})
 			} else if (e.which == 27) {

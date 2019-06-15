@@ -24,9 +24,9 @@ window.page = {
 	}
 	,alert: function (title, msg) {
 		var t = title || '', m = msg || ''
-		$('<div class="alert"><button type="button" class="close">'
-		+ '<span>&times;</span></button><b>' + t + '</b><p>' + m + '</p></div>'
-		).on('click', 'button.close', function(){$(this).parent().remove()}
+		$('<div class="alert"><header><button type="button" class="close"></button><b>'
+		  + t + '</b></header><p>' + m + '</p></div>'
+		).on('click', 'button.close', function(){$(this).parent().parent().remove()}
 		).appendTo($('body'))
 	}
 }
