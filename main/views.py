@@ -202,7 +202,7 @@ class MenuTree(View):
         try:
             html = static_doc(d)
         except Exception as e:
-            return JsonResponse({'result': 'failed', 'msg': e, 'doc': ''})
+            return JsonResponse({'result': 'failed', 'msg': str(e), 'doc': ''})
 
         return JsonResponse({'result': 'ok', 'msg': '', 'doc': html})
 
