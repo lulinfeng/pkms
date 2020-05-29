@@ -180,6 +180,8 @@ class MenuTree(View):
         d = DocModel.objects.get(pk=pk)
         if (d.doctype | 4 == d.doctype) and d.pwd != data.get('pwd', ''):
             return JsonResponse({'result': 'fail', 'msg': 'permission die'})
+        if source is True:
+            return JsonResponse({'result': 'ok', 'source': d.content})
         if d.source_type == 'rst' or d.doctype | 2 == d.doctype:
             r = ID_PREFIX_RE.search(d.content)
             if r is not None:
@@ -188,10 +190,7 @@ class MenuTree(View):
                 html = rst(d.content)
         else:
             html = mymarkdown(d.content)
-        if source is True:
-            return JsonResponse({'result': 'ok', 'source': d.content})
-        else:
-            return JsonResponse({'result': 'ok', 'doc': html})
+        return JsonResponse({'result': 'ok', 'doc': html})
 
     def put(self, request, *args, **kwargs):
         # save doc
@@ -200,7 +199,10 @@ class MenuTree(View):
         d = DocModel.objects.get(pk=pk)
         d.content = data['content']
         d.save(update_fields=['content'])
-        html = static_doc(d)
+        try:
+            html = static_doc(d)
+        except Exception as e:
+            return JsonResponse({'result': 'failed', 'msg': e, 'doc': ''})
 
         return JsonResponse({'result': 'ok', 'msg': '', 'doc': html})
 
