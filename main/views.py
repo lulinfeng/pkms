@@ -14,7 +14,7 @@ import subprocess
 from django.utils.decorators import available_attrs, method_decorator
 # from django.contrib.auth.decorators import permission_required
 from django.utils.timezone import now
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
 from django.db.models import F, Case, When
 from django.core.files.storage import default_storage
@@ -614,3 +614,13 @@ def export_docx(request):
     if status != 0:
         return JsonResponse({'result': 'failed', 'msg': msg})
     return JsonResponse({'result': 'ok', 'data': '/' + output})
+
+
+def what_ip(request):
+    '''获取客户端ip'''
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return HttpResponse(ip)
