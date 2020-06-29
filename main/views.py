@@ -5,13 +5,13 @@ import re
 import time
 import six
 import json
-from functools import wraps
+from functools import wraps, WRAPPER_ASSIGNMENTS
 from hashlib import md5
 import codecs
 import tempfile
 import subprocess
 
-from django.utils.decorators import available_attrs, method_decorator
+from django.utils.decorators import method_decorator
 # from django.contrib.auth.decorators import permission_required
 from django.utils.timezone import now
 from django.http import JsonResponse, HttpResponse
@@ -36,7 +36,7 @@ def _loads(data):
 
 def my_perm_required(perm):
     def decorator(view_func):
-        @wraps(view_func, assigned=available_attrs(view_func))
+        @wraps(view_func, assigned=WRAPPER_ASSIGNMENTS)
         def _wrapped_view(request, *args, **kwargs):
             if request.user.has_perm(perm) is True:
                 return view_func(request, *args, **kwargs)
