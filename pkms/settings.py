@@ -26,7 +26,7 @@ SECRET_KEY = '**************************************************'
 DEBUG = True
 
 ALLOWED_HOSTS = ['10.18.78.61', 'localhost', '127.0.0.1']
-
+CSRF_TRUSTED_ORIGINS=['https://*.domain.com']
 
 # Application definition
 
