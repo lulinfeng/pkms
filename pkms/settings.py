@@ -128,3 +128,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = '/media/'
 STATIC_PAGE = os.path.join(BASE_DIR, 'staticpage')
 PUBLIC_PAGE = os.path.join(BASE_DIR, 'publicpage')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

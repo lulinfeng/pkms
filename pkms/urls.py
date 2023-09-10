@@ -14,21 +14,21 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf import settings
-from django.conf.urls import url
+from django.urls import re_path
 from django.conf.urls.static import static
 from django.contrib import admin
 from main import views as main_view
 
 urlpatterns = [
-    url(r'^$', main_view.DocView.as_view()),
-    url(r'^menu/$', main_view.MenuTree.as_view()),
-    url(r'^upload/$', main_view.upload_file),
-    url(r'^publish/$', main_view.publish_doc),
-    url(r'^unpublish/$', main_view.unpublish_doc),
-    url(r'^exportpdf/$', main_view.export_pdf),
-    url(r'^exportdocx/$', main_view.export_docx),
-    url(r'^what_ip/$', main_view.what_ip),
-    url(r'^admin/', admin.site.urls),
+    re_path(r'^$', main_view.DocView.as_view()),
+    re_path(r'^menu/$', main_view.MenuTree.as_view()),
+    re_path(r'^upload/$', main_view.upload_file),
+    re_path(r'^publish/$', main_view.publish_doc),
+    re_path(r'^unpublish/$', main_view.unpublish_doc),
+    re_path(r'^exportpdf/$', main_view.export_pdf),
+    re_path(r'^exportdocx/$', main_view.export_docx),
+    re_path(r'^what_ip/$', main_view.what_ip),
+    re_path(r'^admin/', admin.site.urls),
 ]
 
 if settings.DEBUG is True:
