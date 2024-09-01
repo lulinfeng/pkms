@@ -10,10 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
-import os
+from pathlib import Path
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -26,7 +27,7 @@ SECRET_KEY = '**************************************************'
 DEBUG = True
 
 ALLOWED_HOSTS = ['10.18.78.61', 'localhost', '127.0.0.1']
-CSRF_TRUSTED_ORIGINS=['https://*.domain.com']
+CSRF_TRUSTED_ORIGINS=['http://localhost']
 
 # Application definition
 
@@ -37,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'markup',
+    # 'markup',
     'main',
 ]
 
@@ -45,7 +46,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -78,7 +79,7 @@ WSGI_APPLICATION = 'pkms.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -105,7 +106,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hans'
 
 TIME_ZONE = 'UTC'
 
@@ -121,12 +123,39 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
+    BASE_DIR / 'static',
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, "public_static")
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+STATIC_ROOT = BASE_DIR / 'public/static'
 MEDIA_URL = '/media/'
-STATIC_PAGE = os.path.join(BASE_DIR, 'staticpage')
-PUBLIC_PAGE = os.path.join(BASE_DIR, 'publicpage')
+MEDIA_ROOT = BASE_DIR / 'public/media'
+
+# 静态html，分系统和独立页，其中系统又分私有和公开的，公开的和独立页可放一起，nginx之类可直接访问
+# PRIVATE_HTML_ROOT 为系统私有， PUBLIC_HTML_ROOT 公开的, PUBLIC_STATIC_HTML_ROOT 系统公开的
+
+# rst转为静态html，公开的，允许访客查看的，配合nginx就对应该目录下
+PUBLIC_HTML_URL = '/public_html/'  # 若自己无权限配制 server alias 只能和PUBLIC_HTML_ROOT配制的目录名一样
+
+# rst转为静态html目录，nginx可配制拒绝访问，或设置在ngixn访问不到的目录
+PRIVATE_HTML_ROOT = BASE_DIR / 'static_html'
+# public 静态html路径
+PUBLIC_HTML_ROOT = BASE_DIR / 'public/public_html'
+PUBLIC_STATIC_HTML_ROOT = BASE_DIR / 'public/static_html'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+############### 系统静态化html 设计 ################
+# 目录树上a标签添加 href 属性，未发布的附值'#', 发布的指向静态化html ，便于搜索引擎收录
+# 静态化文件名： 数据库id加盐的取md5值，前16位系统私有html文件名，8:24位则是公开的html文件名
+# 以年(2024)为分目录，避免重名
+# 将私密节点静态化保存在 PRIVATE_HTML_ROOT 下， 由django直接读取返回，避免每次都需要源码编译
+# 发布的节点，系统内嵌页存放在PUBLIC_STATIC_HTML_ROOT，单页内容存放在 PUBLIC_HTML_ROOT
+# 项目启动时，检查这些目录，若不存在就创建
+
+STATIC_ROOT.mkdir(parents=True, exist_ok=True)
+MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+PRIVATE_HTML_ROOT.mkdir(parents=True, exist_ok=True)
+PUBLIC_HTML_ROOT.mkdir(parents=True, exist_ok=True)
+PUBLIC_STATIC_HTML_ROOT.mkdir(parents=True, exist_ok=True)
+
+LOGOUT_REDIRECT_URL = '/'

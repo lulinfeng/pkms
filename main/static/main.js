@@ -127,6 +127,7 @@ page.api = {
 				text: data.node.text,
 				source_type: data.node.data && data.node.data.source_type || ''
 			})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				data.node.data.id = resp.id
@@ -160,7 +161,9 @@ page.api = {
 		$.ajax({
 			type: 'rename',
 			url: '/menu/',
-			data: JSON.stringify({'id': data.node.data.id, 'text': data.node.text})
+			data: JSON.stringify({'id': data.node.data.id, 'text': data.node.text,
+				'parent': data.instance.get_node(data.node.parent).data.id})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				$(page.Tab.current.li).find('span').text(data.node.text)
@@ -184,6 +187,7 @@ page.api = {
 				old_parent: data.instance.get_node(data.old_parent).data.id,
 				old_pos: data.old_position
 			})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result != 'ok') {
 				alert(resp.msg)
@@ -205,6 +209,7 @@ page.api = {
 				old_parent: data.instance.get_node(data.old_parent).data.id,
 				old_pos: data.old_position
 			})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				data.node.data = $.extend(true, {}, data.original.data)
@@ -248,6 +253,7 @@ page.api = {
 			type: 'put',
 			url: '/menu/',
 			data: JSON.stringify({'id': page.Tab.current.node.data.id, content: editor.getValue()})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.Tab.current.$doc.html(resp.doc)
@@ -263,11 +269,19 @@ page.api = {
 	,getDoc: function (e, data) {
 		if (data && data.selected && data.selected.length && ((data.node.type | 1) == data.node.type)) {
 			if (data.node.a_attr.href == '#') {
+				// var form = new FormData()
+				// form.append('id', data.node.data.id)
+				// form.append('csrfmiddlewaretoken', csrftoken)
 				// general get doc
 				$.ajax({
 					type: 'getdoc',
 					url: '/menu/',
 					data: JSON.stringify(data.node.data)
+					// data: form
+					// ,processData: false
+					// ,contentType: false
+					// ,enctype: 'multipart/form-data'
+					,headers: {'X-CSRFToken': csrftoken}
 				}).done(function (resp) {
 					if (resp.result == 'ok') {
 						// page.Tab.current.node_id = data.node.data.id
@@ -287,7 +301,10 @@ page.api = {
 				// get the static resource
 				$.ajax({
 					type: 'get',
+					// static 的html 和 public 的html略有差别，已发布的节点，直接读html文件
+					// 在pkms内部显示的需要读取static静态页面，而public则是可以单独打开查看的页面
 					url: data.node.a_attr.href.replace('/public', '/static'),
+					// url: data.node.a_attr.href,
 					data: Date.parse(new Date()) + ''
 				}).done(function (resp) {
 					page.Tab.current.$doc.html(resp).css('bottom', 0)
@@ -312,6 +329,7 @@ page.api = {
 			type: 'getdoc',
 			url: '/menu/',
 			data: JSON.stringify({'id': obj.data.id, 'source': true})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.Tab.current.$doc.html(resp.doc).css({'bottom': page.Tab.current.docs_bottom + '%'});
@@ -336,6 +354,7 @@ page.api = {
 				type: 'delete',
 				url: '/menu/',
 				data: JSON.stringify({id: data.node.data.id, type: data.node.type, parent: parent})
+				,headers: {'X-CSRFToken': csrftoken}
 			}).done(function (resp) {
 				if (resp.result == 'ok') {
 					data.instance.get_node(prev_dom, true).find('a').first().focus()
@@ -404,11 +423,12 @@ page.api = {
 			type: 'setpwd',
 			url: '/menu/',
 			data: JSON.stringify({id: obj.data.id, pwd: pwd})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			page.menu.get_node(obj, true).find('a').first().focus()
 			if (resp.result == 'ok') {
 				page.message('success')
-				page.menu.set_type_all(obj, obj.type | 4)
+				page.menu.set_type_all(obj, obj.type | 4, '#')
 			} else {
 				page.alert('', 'failed to set password')
 			}
@@ -420,6 +440,7 @@ page.api = {
 			type: 'post'
 			,url: '/publish/'
 			,data: JSON.stringify({id: obj.data.id})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				// obj.a_attr.href = resp.data
@@ -436,6 +457,7 @@ page.api = {
 			type: 'post'
 			,url: '/unpublish/'
 			,data: JSON.stringify({id: obj.data.id})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.menu.get_node(obj, true).find('a').first().focus()
@@ -452,6 +474,7 @@ page.api = {
 			type: 'post'
 			,url: '/exportpdf/'
 			,data: JSON.stringify({id: obj.data.id})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.menu.get_node(obj, true).find('a').first().focus()
@@ -470,6 +493,7 @@ page.api = {
 			type: 'post'
 			,url: '/exportdocx/'
 			,data: JSON.stringify({id: obj.data.id})
+			,headers: {'X-CSRFToken': csrftoken}
 		}).done(function (resp) {
 			if (resp.result == 'ok') {
 				page.menu.get_node(obj, true).find('a').first().focus()
@@ -762,8 +786,9 @@ page.event = {
 						if (data.node.id == page.Tab.current.node.id) {
 							return
 						}
+						// 非已打开与新建，在默认tab渲染，需先更新数据，否则会选中到旧数据节点上
+						page.tabs.default.node = data.node
 						page.Tab.activate('default')
-						page.Tab.current.node = data.node
 					}
 				}
 				// pwd 4

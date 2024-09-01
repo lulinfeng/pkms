@@ -1,5 +1,5 @@
 six
 pygments
 docutils
-markdown
+markdown>=1.7
 django

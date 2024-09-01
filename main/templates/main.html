@@ -1,4 +1,4 @@
-{% load markup static %}
+{% load static %}
 <link rel="stylesheet" type="text/css" href="/static/css/themes/theme.css">
 <link rel="stylesheet" href="/static/css/base.css" />
 
@@ -9,7 +9,13 @@
 			{% if user.is_authenticated %}
 				Welcome,
 				<strong>{% firstof user.get_short_name user.get_username %}</strong>.
-				<a href="/admin/logout/?next=/" tabindex="-1">Log out</a>
+				<form method="post" action="{% url 'admin:logout' %}" style="display: inline;">
+					{% csrf_token %}
+					<script>
+					const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+					</script>
+					<button type="submit" style="background: #313131; color: #a5a5a5;">Logout</button>
+				</form>
 			{% else %}
 				<a href="/admin/login/?next=/" tabindex="-1">Log in</a>
 			{% endif %}
@@ -27,11 +33,11 @@
 	<div id="main"></div>
 </main>
 
-<script src="{% static "modules/jquery-1.11.2.min.js" %}"></script>
-<script src="{% static "modules/jstree/jstree.min.js" %}"></script>
-<script src="{% static "modules/jstree/jstree.tags.js" %}"></script>
-<script src="{% static "modules/ace/ace.js" %}"></script>
-<script src="{% static "mediablock.js" %}"></script>
-<script src="{% static "common.js" %}"></script>
-<script src="{% static "html2rst.js" %}"></script>
-<script src="{% static "main.js" %}"></script>
+<script src='{% static "modules/jquery-1.11.2.min.js" %}'></script>
+<script src='{% static "modules/jstree/jstree.min.js" %}'></script>
+<script src='{% static "modules/jstree/jstree.tags.js" %}'></script>
+<script src='{% static "modules/ace/ace.js" %}'></script>
+<script src='{% static "mediablock.js" %}'></script>
+<script src='{% static "common.js" %}'></script>
+<script src='{% static "html2rst.js" %}'></script>
+<script src='{% static "main.js" %}'></script>

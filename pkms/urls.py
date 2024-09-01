@@ -32,5 +32,9 @@ urlpatterns = [
 ]
 
 if settings.DEBUG is True:
+    # 没有配制nginx时，添加下面静态地址
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.PUBLIC_HTML_URL, document_root=settings.PUBLIC_HTML_ROOT)
+    urlpatterns += static('/static_html/', document_root=settings.PUBLIC_STATIC_HTML_ROOT)
+
