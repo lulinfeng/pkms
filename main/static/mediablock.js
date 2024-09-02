@@ -70,6 +70,7 @@ require("../config").defineOptions(Editor.prototype, "editor", {
                     data: f,
                     processData: false,
                     contentType: false
+                    ,headers: {'X-CSRFToken': csrftoken}
                   }).done(function (resp) {
                     if (resp.result == 'ok') {
                       var lines = ['', '.. figure:: ' + resp.path, '']

@@ -539,18 +539,19 @@ def upload_file(request):
 
     media = request.FILES['data']
     n = now()
-    day_path = '%s' % n.strftime('%Y%m%d')
+    # day_path = '%s' % n.strftime('%Y%m%d')
+    day_path = n.strftime('%Y/%m')
     file_path = settings.MEDIA_ROOT / day_path
     if not file_path.exists():
         file_path.mkdir(parents=True)
-    filename = '%d.%s' % (int(time.time()), media.content_type.split('/')[-1])
-    default_storage.save(os.path.join(file_path, filename), media)
+    filename = '%s.%s' % (n.strftime('%d%H%M%S'), media.content_type.split('/')[-1])
+    default_storage.save(file_path / filename, media)
     # with open(os.path.join(file_path, filename), 'wb+') as f:
     #     for chunk in media.chunks():
     #         f.write(chunk)
     return JsonResponse({
         'result': 'ok',
-        'path': settings.MEDIA_URL / day_path / filename
+        'path': settings.MEDIA_URL + day_path + '/' + filename
     })
 
 
