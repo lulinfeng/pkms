@@ -1037,6 +1037,7 @@ page.event = {
 					url: 'menu',
 					type: 'search',
 					data: query
+					,headers: {'X-CSRFToken': csrftoken}
 				}).done(function (data) {
 					if (data.result == 'ok') {
 						var digui = function (folders, ids) {
