@@ -303,7 +303,7 @@ page.api = {
 					type: 'get',
 					// static 的html 和 public 的html略有差别，已发布的节点，直接读html文件
 					// 在pkms内部显示的需要读取static静态页面，而public则是可以单独打开查看的页面
-					url: data.node.a_attr.href.replace('/public', '/static'),
+					url: data.node.a_attr.href.replace('/public_html', '/static_html'),
 					// url: data.node.a_attr.href,
 					data: Date.parse(new Date()) + ''
 				}).done(function (resp) {
@@ -729,6 +729,7 @@ page.event = {
 						}
 					}
 					break
+				case 85: // u
 				case 219: // pgup [
 					e.preventDefault()
 					if (this.scrollTop > 0) {
@@ -739,6 +740,7 @@ page.event = {
 						}
 					}
 					break
+				case 68: // d
 				case 221: // pgdn ]
 					e.preventDefault()
 					var h = this.scrollHeight - this.clientHeight

@@ -87,6 +87,9 @@ install gunicorn
     # d /run/pkms 0755 someuser somegroup -
     d /run/pkms 0755 root root -
 
+d 创建/run/pkms目录，并赋于指定的User/Group与权限。如果指定的目录已经存在，
+那么仅调整User/Group与权限。
+
 最后启动服务
 -------------
 不要忘记设置service文件可执行权限，及让新建的服务生效，然后就可以使用系统服务
@@ -100,12 +103,7 @@ install gunicorn
     systemctl start pkms.socket
     systemctl start pkms
 
-以后就可以使用systemctl或service来 开启/重启/停止 pkms::
-
-    systemctl start/restart/stop pkms
-    service pkms start/restart/stop
-
-
+以后就可以使用systemctl或service来 开启/重启/停止 pkms
 
 测试
 --------
